@@ -1,7 +1,21 @@
 
+
 # Gestor de Hojas de Vida (GHV_UIP)
 
-Backend modular desarrollado en NestJS para la gestión de hojas de vida, postulaciones y procesos de selección académica.
+Backend modular desarrollado en NestJS para la gestión de hojas de vida, postulaciones y procesos de selección académica en el ámbito universitario. Permite la administración de usuarios, roles, documentos y procesos de selección.
+## Estructura del proyecto
+
+```
+ghv_uip/
+├── src/                  # Código fuente principal (módulos, controladores, servicios)
+├── test/                 # Pruebas end-to-end
+├── dist/                 # Archivos compilados (build)
+├── .env                  # Variables de entorno (no versionar)
+├── package.json          # Dependencias y scripts
+├── tsconfig.json         # Configuración TypeScript
+└── README.md             # Documentación principal
+```
+
 
 
 ## Requisitos
@@ -17,12 +31,27 @@ npm install
 ```
 
 
+
 ## Configuración
 Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 ```
 JWT_SECRET=supersecretkey
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=usuario
+DB_PASSWORD=contraseña
+DB_DATABASE=ghv_uip
 ```
-Asegúrate de tener una base de datos MySQL llamada `ghv_uip` y configura el usuario/contraseña en `src/app.module.ts` o mediante variables de entorno.
+Asegúrate de tener una base de datos MySQL llamada `ghv_uip` y que los datos de conexión coincidan con los de tu entorno.
+## Documentación Swagger
+
+La API cuenta con documentación interactiva generada con Swagger. Una vez el servidor esté en ejecución, accede a:
+
+```
+http://localhost:3000/api
+```
+
+
 
 
 ## Comandos útiles
@@ -35,7 +64,38 @@ npm run test
 
 # Ejecutar pruebas end-to-end
 npm run test:e2e
+
+# Compilar para producción
+npm run build
+
+# Iniciar en producción
+npm run start:prod
 ```
+## Despliegue en producción
+
+1. Configura las variables de entorno en el servidor de producción.
+2. Ejecuta `npm install` y luego `npm run build`.
+3. Inicia el servidor con `npm run start:prod`.
+
+## Contribución
+
+¡Las contribuciones son bienvenidas! Para colaborar:
+
+1. Haz un fork del repositorio.
+2. Crea una rama nueva (`git checkout -b feature/nueva-funcionalidad`).
+3. Realiza tus cambios y haz commit.
+4. Haz push a tu fork y abre un Pull Request.
+
+Por favor, sigue las buenas prácticas de código y documentación.
+
+## Licencia
+
+Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo LICENSE para más detalles.
+
+## Contacto
+
+Para dudas, soporte o sugerencias, contacta a: [jdav117@gmail.com](mailto:jdav117@gmail.com)
+
 
 
 ## Endpoints principales
