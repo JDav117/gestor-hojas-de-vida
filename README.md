@@ -1,38 +1,46 @@
+
 # Gestor de Hojas de Vida (GHV_UIP)
 
-Backend desarrollado en NestJS para la gestión de hojas de vida, postulaciones y procesos de selección académica.
+Backend modular desarrollado en NestJS para la gestión de hojas de vida, postulaciones y procesos de selección académica.
+
 
 ## Requisitos
-- Node.js >= 18
-- MySQL
+- Node.js >= 18.x
+- MySQL >= 8.x
+
 
 ## Instalación
+
+Clona el repositorio y ejecuta:
 ```bash
 npm install
 ```
 
+
 ## Configuración
-Crea un archivo `.env` en la raíz con el siguiente contenido:
+Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 ```
 JWT_SECRET=supersecretkey
 ```
-Asegúrate de tener una base de datos MySQL llamada `ghv_uip` y configura usuario/contraseña en `src/app.module.ts`.
+Asegúrate de tener una base de datos MySQL llamada `ghv_uip` y configura el usuario/contraseña en `src/app.module.ts` o mediante variables de entorno.
+
 
 ## Comandos útiles
 ```bash
-# Desarrollo
+# Iniciar en modo desarrollo
 npm run start:dev
 
-# Pruebas unitarias
+# Ejecutar pruebas unitarias
 npm run test
 
-# Pruebas e2e
+# Ejecutar pruebas end-to-end
 npm run test:e2e
 ```
 
+
 ## Endpoints principales
 
-### 1. Crear roles base (solo para pruebas)
+### 1. Crear roles base (solo pruebas)
 `POST /roles/init`
 
 ### 2. Registro de usuario
@@ -64,7 +72,6 @@ Respuesta:
 }
 ```
 
-
 ### 4. Endpoints protegidos (requieren JWT)
 Agrega el header:
 ```
@@ -88,7 +95,6 @@ Authorization: Bearer <access_token>
     "ruta_archivo": "/files/cv.pdf"
   }
   ```
-
 - `GET /documentos` — Listar documentos
 - `GET /documentos/:id` — Detalle de documento
 - `PATCH /documentos/:id` — Actualizar documento
@@ -99,13 +105,16 @@ Authorization: Bearer <access_token>
   ```
 - `DELETE /documentos/:id` — Eliminar documento
 
+
 ## Pruebas automáticas
 Las pruebas e2e cubren el flujo de registro, login y acceso protegido.
+
 
 ## Módulos implementados
 - Usuarios
 - Roles
-- Autenticación JWT
+- Autenticación (JWT)
+
 
 ## Módulos recomendados a implementar
 - Programas Académicos
@@ -114,12 +123,18 @@ Las pruebas e2e cubren el flujo de registro, login y acceso protegido.
 - Documentos
 - Ítems de Evaluación
 - Evaluaciones
-- BaremoConvocatoria
+- Baremo Convocatoria
 
-## Notas
+
+## Notas y recomendaciones
 - El endpoint `/roles/init` es solo para pruebas. Elimínalo o protégelo antes de producción.
 - Usa variables de entorno para datos sensibles.
+- Revisa y ajusta los permisos de los roles antes de desplegar en producción.
+- Considera agregar documentación OpenAPI/Swagger (`/api`) para facilitar el consumo de la API.
+
 
 ---
 
 Desarrollado con ❤️ usando NestJS.
+
+¿Quieres contribuir? ¡Pull requests y sugerencias son bienvenidos!
