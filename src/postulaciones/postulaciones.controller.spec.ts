@@ -59,10 +59,12 @@ describe('PostulacionesController', () => {
 
   it('should update a postulacion', async () => {
     const dto: UpdatePostulacionDto = { estado: 'aceptada' };
-    expect(await controller.update(1, dto)).toEqual({ ...onePostulacion, ...dto });
+    const req = { user: { userId: 1, roles: ['admin'] } };
+    expect(await controller.update(1, dto, req)).toEqual({ ...onePostulacion, ...dto });
   });
 
   it('should remove a postulacion', async () => {
-    expect(await controller.remove(1)).toBeUndefined();
+    const req = { user: { userId: 1, roles: ['admin'] } };
+    expect(await controller.remove(1, req)).toBeUndefined();
   });
 });

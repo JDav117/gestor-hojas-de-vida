@@ -3,6 +3,7 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../common/roles.decorator';
 
 @Controller('roles')
 export class RolesController {
@@ -10,6 +11,7 @@ export class RolesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @Roles('admin')
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);
   }
@@ -17,12 +19,14 @@ export class RolesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
+  @Roles('admin')
   findAll() {
     return this.rolesService.findAll();
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
+  @Roles('admin')
   async findOne(@Param('id') id: string) {
     const role = await this.rolesService.findOne(Number(id));
     if (!role) {
@@ -33,12 +37,14 @@ export class RolesController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
+  @Roles('admin')
   update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.rolesService.update(Number(id), updateRoleDto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @Roles('admin')
   remove(@Param('id') id: string) {
     return this.rolesService.remove(Number(id));
   }

@@ -9,9 +9,11 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
 import { DocumentosModule } from './documentos/documentos.module';
+import { PostulacionesModule } from './postulaciones/postulaciones.module';
 import { ItemsEvaluacionModule } from './items-evaluacion/items-evaluacion.module';
 import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
 import { BaremoConvocatoriaModule } from './baremo-convocatoria/baremo-convocatoria.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -30,9 +32,11 @@ import { BaremoConvocatoriaModule } from './baremo-convocatoria/baremo-convocato
   RolesModule,
   AuthModule,
   DocumentosModule,
+  PostulacionesModule,
   ItemsEvaluacionModule,
   EvaluacionesModule,
   BaremoConvocatoriaModule,
+  CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],
