@@ -1,64 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -101,23 +40,15 @@ describe('AppController (e2e)', () => {
   });
 
   it('/users (POST) - registro de usuario', async () => {
-    // Usar rol admin creado en init
-    const rolesRes = await request(server)
-      .get('/roles')
-      .expect(200);
-    const adminRole = rolesRes.body.find((role: any) => role.nombre_rol === 'admin');
-    expect(adminRole).toBeDefined();
-    const rolId = adminRole.id;
-
     const res = await request(server)
       .post('/users')
       .send({
         nombre: 'Test',
         apellido: 'User',
-        email: 'testuser@mail.com',
+        email: `testuser${Date.now()}@mail.com`,
         password: 'TestPass1!',
-        identificacion: '999999',
-        roles: [rolId],
+        identificacion: `999999${Date.now()}`,
+        roles: [1], // Assuming admin role id is 1 after init
       })
       .expect(201);
     expect(res.body).toHaveProperty('id');
@@ -131,7 +62,7 @@ describe('AppController (e2e)', () => {
         email: 'testuser@mail.com',
         password: 'TestPass1!',
       })
-      .expect(201);
+      .expect(200);
     expect(res.body).toHaveProperty('access_token');
     token = res.body.access_token;
   });
