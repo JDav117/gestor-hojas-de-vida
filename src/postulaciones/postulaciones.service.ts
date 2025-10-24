@@ -1,0 +1,44 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
+import { Postulacion } from './postulacion.entity';
+import { CreatePostulacionDto } from './dto/create-postulacion.dto';
+
+@Injectable()
+export class PostulacionesService {
+  constructor(
+    @InjectRepository(Postulacion)
+    private readonly postulacionRepository: Repository<Postulacion>,
+  ) {}
+
+  async create(createPostulacionDto: CreatePostulacionDto): Promise<Postulacion> {
+    const postulacion = this.postulacionRepository.create(createPostulacionDto);
+    return await this.postulacionRepository.save(postulacion);
+  }
+
+  async findAll(): Promise<Postulacion[]> {
+    return this.postulacionRepository.find();
+  }
+
+  async findAllForPostulante(postulanteId: number): Promise<Postulacion[]> {
+    return this.postulacionRepository.find({ where: { postulante_id: postulanteId } });
+  }
+
+  async findByIds(ids: number[]): Promise<Postulacion[]> {
+    if (!ids || ids.length === 0) return [];
+    return this.postulacionRepository.find({ where: { id: In(ids) } });
+  }
+
+  async findOne(id: number): Promise<Postulacion | null> {
+    return this.postulacionRepository.findOneBy({ id });
+  }
+
+  async update(id: number, updatePostulacionDto: any): Promise<Postulacion | null> {
+    await this.postulacionRepository.update(id, updatePostulacionDto);
+    return this.findOne(id);
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.postulacionRepository.delete(id);
+  }
+}
