@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from './user.entity';
+import { Usuario } from './user.entity';
 import { Role } from '../roles/role.entity';
 import { Repository } from 'typeorm';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let usersRepository: Repository<User>;
+  let usersRepository: Repository<Usuario>;
   let rolesRepository: Repository<Role>;
 
   beforeEach(async () => {
@@ -15,7 +15,7 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         {
-          provide: getRepositoryToken(User),
+          provide: getRepositoryToken(Usuario),
           useClass: Repository,
         },
         {
@@ -26,7 +26,7 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    usersRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    usersRepository = module.get<Repository<Usuario>>(getRepositoryToken(Usuario));
     rolesRepository = module.get<Repository<Role>>(getRepositoryToken(Role));
   });
 

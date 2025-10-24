@@ -34,7 +34,13 @@ describe('UsersController', () => {
   });
 
   it('should call service.create on create', async () => {
-    const dto: CreateUserDto = { nombre: 'Test', apellido: 'User', email: 'test@mail.com', password: '123', identificacion: '123', roles: [1] };
+    const dto: CreateUserDto = {
+      nombre: 'Test',
+      apellido: 'User',
+      email: 'test@mail.com',
+      password: 'Abc12345!',
+      identificacion: '123',
+    } as any;
     await controller.create(dto);
     expect(service.create).toHaveBeenCalledWith(dto);
   });
@@ -45,18 +51,18 @@ describe('UsersController', () => {
   });
 
   it('should call service.findOne on findOne', async () => {
-    await controller.findOne('1');
+    await controller.findOne(1);
     expect(service.findOne).toHaveBeenCalledWith(1);
   });
 
   it('should call service.update on update', () => {
-    const dto: UpdateUserDto = { nombre: 'Updated' };
-    controller.update('1', dto);
+    const dto: UpdateUserDto = { nombre: 'Updated' } as any;
+    controller.update(1, dto);
     expect(service.update).toHaveBeenCalledWith(1, dto);
   });
 
   it('should call service.remove on remove', () => {
-    controller.remove('1');
+    controller.remove(1);
     expect(service.remove).toHaveBeenCalledWith(1);
   });
 });

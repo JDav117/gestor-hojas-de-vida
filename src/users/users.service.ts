@@ -1,55 +1,87 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { Usuario } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Role } from '../roles/role.entity';
-import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-    @InjectRepository(Role)
-    private rolesRepository: Repository<Role>,
+    @InjectRepository(Usuario)
+    private readonly userRepository: Repository<Usuario>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { roles, password, email, identificacion, ...userData } = createUserDto;
-    // Validar email único
-    const existing = await this.usersRepository.findOne({ where: [{ email }, { identificacion }] });
-    if (existing) {
-      throw new BadRequestException('El email o la identificación ya están registrados');
+  async create(createUserDto: CreateUserDto) {
+    const { email, identificacion, password, ...rest } = createUserDto as any;
+
+    // Verificar duplicados (email o identificacion)
+    const existeEmail = await this.userRepository.findOne({ where: { email } });
+    if (existeEmail) {
+      // Mensaje requerido por la especificación: "El elemento ya existe"
+      throw new BadRequestException('El elemento ya existe');
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = this.usersRepository.create({ ...userData, email, identificacion, password_hash: hashedPassword });
-    if (roles && roles.length > 0) {
-      user.roles = await this.rolesRepository.findByIds(roles);
+
+    const existeId = await this.userRepository.findOne({ where: { identificacion } });
+    if (existeId) {
+      throw new BadRequestException('El elemento ya existe');
     }
-    return this.usersRepository.save(user);
+
+    // Encriptar contraseña
+    const hash = await bcrypt.hash(password, 10);
+
+    const user = this.userRepository.create({
+      ...rest,
+      email,
+      identificacion,
+      password_hash: hash,
+    });
+
+    return this.userRepository.save(user);
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll(): Promise<Usuario[]> {
+    return this.userRepository.find();
   }
 
-  findOne(id: number): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<Usuario> {
+    const u = await this.userRepository.findOne({ where: { id } });
+    if (!u) throw new NotFoundException('Usuario no encontrado');
+    return u;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+  async findByEmail(email: string): Promise<Usuario | null> {
+    return this.userRepository.findOne({ where: { email } });
+  }
+
+  async update(id: number, updateDto: UpdateUserDto) {
     const user = await this.findOne(id);
-    if (!user) throw new Error('User not found');
-    Object.assign(user, updateUserDto);
-    if (updateUserDto.roles) {
-      user.roles = await this.rolesRepository.findByIds(updateUserDto.roles);
+
+    if ((updateDto as any).email && (updateDto as any).email !== user.email) {
+      const e = await this.userRepository.findOne({ where: { email: (updateDto as any).email } });
+      if (e) throw new BadRequestException('El elemento ya existe');
     }
-    return this.usersRepository.save(user);
+
+    if ((updateDto as any).identificacion && (updateDto as any).identificacion !== user.identificacion) {
+      const idExists = await this.userRepository.findOne({ where: { identificacion: (updateDto as any).identificacion } });
+      if (idExists) throw new BadRequestException('El elemento ya existe');
+    }
+
+    // Si se envía password en update, hashearla
+    if ((updateDto as any).password) {
+      const hash = await bcrypt.hash((updateDto as any).password, 10);
+      (updateDto as any).password_hash = hash;
+      delete (updateDto as any).password;
+    }
+
+    await this.userRepository.update(id, updateDto as any);
+    return this.findOne(id);
   }
 
-  async remove(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+  async remove(id: number) {
+    const user = await this.findOne(id);
+    await this.userRepository.remove(user);
+    return { deleted: true };
   }
 }
