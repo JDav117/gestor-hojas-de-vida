@@ -8,6 +8,10 @@ export class Convocatoria {
   @Column()
   nombre: string;
 
+  // Descripción opcional de la convocatoria
+  @Column({ type: 'text', nullable: true })
+  descripcion?: string | null;
+
   @Column({ type: 'datetime' })
   fecha_apertura: Date;
 

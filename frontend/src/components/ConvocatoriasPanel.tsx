@@ -94,7 +94,7 @@ export default function ConvocatoriasPanel({ open, onClose }: { open: boolean; o
                     <Link className="btn" to={`/mis-postulaciones?convocatoria=${c.id}`} onClick={onClose}>Postular</Link>
                   )}
                   {!isAuthenticated && (
-                    <span className="text-muted">Inicia sesión para postular</span>
+                    <span className="text-muted">Inicia sesión para aplicar</span>
                   )}
                 </div>
               </div>

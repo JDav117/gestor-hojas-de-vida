@@ -21,7 +21,10 @@ export class RolesGuard implements CanActivate {
     const userRoles = Array.isArray(user.roles)
       ? user.roles.map((r: any) => typeof r === 'string' ? r : r.nombre_rol || r.name || r)
       : [];
-    const hasRole = requiredRoles.some(role => userRoles.includes(role));
+    // Comparación case-insensitive para evitar fallos por mayúsculas/minúsculas
+    const userRolesLc = userRoles.map((v: any) => String(v).toLowerCase());
+    const requiredLc = requiredRoles.map(r => String(r).toLowerCase());
+    const hasRole = requiredLc.some(role => userRolesLc.includes(role));
     if (!hasRole) {
       throw new ForbiddenException('You do not have the required role');
     }

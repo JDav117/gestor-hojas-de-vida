@@ -72,7 +72,6 @@ export default function HomePage() {
         <div className="modal-body">
           {tab === 'login' ? (
             <>
-              <h3 className="modal-title">Iniciar sesión</h3>
               <LoginForm onSuccess={() => { 
                 setOpen(false);
                 // Redirección por rol efectivo si no hay `next`
@@ -94,7 +93,6 @@ export default function HomePage() {
             </>
           ) : (
             <>
-              <h3 className="modal-title">Registro</h3>
               <RegisterForm onSuccess={() => { setTab('login'); }} />
               <div style={{ textAlign: 'center', marginTop: 10 }}>
                 <a className="link" href="#" onClick={(e)=>{ e.preventDefault(); setTab('login'); }}>¿Ya tienes cuenta? Inicia sesión</a>

@@ -35,4 +35,17 @@ export class RolesService {
   async remove(id: number): Promise<void> {
     await this.rolesRepository.delete(id);
   }
+
+  async createInitialRoles(names: string[]): Promise<Role[]> {
+    const created: Role[] = [];
+    for (const nombre_rol of names) {
+      const exists = await this.rolesRepository.findOne({ where: { nombre_rol } });
+      if (!exists) {
+        const r = this.rolesRepository.create({ nombre_rol });
+        created.push(await this.rolesRepository.save(r));
+      }
+    }
+    // Retornar todos los roles actuales (incluidos los ya existentes)
+    return this.rolesRepository.find();
+  }
 }

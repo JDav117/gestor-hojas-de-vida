@@ -18,10 +18,17 @@ export default function SideNav({ open, onClose, items, title = 'Menú de navega
   if (!open) return null;
   const isRight = side === 'right';
   return (
-    <div className="sidenav-root" onClick={onClose}>
-      <div className="sidenav-overlay" />
+    <div
+      className="sidenav-root"
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000 }}
+    >
       <div
-        className="sidenav"
+        className="sidenav-overlay"
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(2px)' }}
+      />
+      <div
+        className={`sidenav ${isRight ? 'right' : 'left'}`}
         style={{
           width,
           position: 'absolute',
@@ -29,8 +36,8 @@ export default function SideNav({ open, onClose, items, title = 'Menú de navega
           height: '100vh',
           background: '#fff',
           ...(isRight
-            ? { right: 0, borderLeft: '1px solid var(--border)', boxShadow: '-16px 0 40px rgba(0,0,0,0.12)' }
-            : { left: 0, borderRight: '1px solid var(--border)', boxShadow: '16px 0 40px rgba(0,0,0,0.12)' }
+            ? { right: 0, left: 'auto', borderLeft: '1px solid var(--border)', boxShadow: '-16px 0 40px rgba(0,0,0,0.12)' }
+            : { left: 0, right: 'auto', borderRight: '1px solid var(--border)', boxShadow: '16px 0 40px rgba(0,0,0,0.12)' }
           )
         }}
         onClick={(e)=> e.stopPropagation()}

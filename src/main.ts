@@ -21,8 +21,17 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Aplicación corriendo en: ${await app.getUrl()}`);
+  app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }),
+);
+
+await app.listen(process.env.PORT ?? 3000);
+const port = process.env.PORT ?? 3000;
+console.log(`Aplicación corriendo en: http://localhost:${port}`);
+
 }
 bootstrap();

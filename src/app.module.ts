@@ -15,10 +15,15 @@ import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
 import { BaremoConvocatoriaModule } from './baremo-convocatoria/baremo-convocatoria.module';
 import { CommonModule } from './common/common.module';
 import { AsignacionesModule } from './asignaciones/asignaciones.module';
+import { ConvocatoriasModule } from './convocatorias/convocatorias.module';
+import { ProgramasAcademicosModule } from './programas-academicos/programas-academicos.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -39,8 +44,13 @@ import { AsignacionesModule } from './asignaciones/asignaciones.module';
   BaremoConvocatoriaModule,
   CommonModule,
   AsignacionesModule,
+  ConvocatoriasModule,
+  ProgramasAcademicosModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

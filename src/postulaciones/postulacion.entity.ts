@@ -11,13 +11,13 @@ export class Postulacion {
   @Column()
   convocatoria_id: number;
 
-  @Column()
-  programa_id: number;
+  @Column({ type: 'int', nullable: true })
+  programa_id: number | null;
 
   @Column({ type: 'datetime' })
   fecha_postulacion: Date;
 
-  @Column()
+  @Column({ default: 'borrador' })
   estado: string;
 
   @Column({ nullable: true })

@@ -3,6 +3,8 @@ import { ProgramasAcademicosService } from './programas-academicos.service';
 import { CreateProgramaAcademicoDto } from './dto/create-programa-academico.dto';
 import { UpdateProgramaAcademicoDto } from './dto/update-programa-academico.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../common/roles.guard';
+import { Roles } from '../common/roles.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('programas-academicos')
@@ -10,6 +12,8 @@ export class ProgramasAcademicosController {
   constructor(private readonly programasAcademicosService: ProgramasAcademicosService) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   create(@Body() createProgramaAcademicoDto: CreateProgramaAcademicoDto) {
     return this.programasAcademicosService.create(createProgramaAcademicoDto);
   }
@@ -25,6 +29,8 @@ export class ProgramasAcademicosController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProgramaAcademicoDto: UpdateProgramaAcademicoDto,
@@ -33,6 +39,8 @@ export class ProgramasAcademicosController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.programasAcademicosService.remove(id);
   }

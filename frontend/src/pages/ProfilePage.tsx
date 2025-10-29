@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import Drawer from '../components/Drawer';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 
@@ -18,7 +17,6 @@ export default function ProfilePage() {
   const effectiveRole: 'admin' | 'evaluador' | 'postulante' | 'none' =
     isAdmin ? 'admin' : (roleNames.includes('evaluador') ? 'evaluador' : (roleNames.includes('postulante') ? 'postulante' : 'none'));
   const [editing, setEditing] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
   const [tab, setTab] = useState<'datos' | 'password'>('datos');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +27,7 @@ export default function ProfilePage() {
   const [counts, setCounts] = useState<{ postulaciones?: number | null; evaluaciones?: number | null }>({});
   // Blocks for Drawer (defined once to reuse in prioritized rendering)
   const PostulacionesBlock = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div>
         <div style={{ fontWeight: 600 }}>Mis postulaciones</div>
         <div className="text-muted">Consulta tus postulaciones y documentos.</div>
@@ -38,12 +36,12 @@ export default function ProfilePage() {
         <span className="chip" title="Total">
           {counts.postulaciones === undefined ? '—' : counts.postulaciones === null ? 'N/A' : counts.postulaciones}
         </span>
-        <Link className="btn" to="/mis-postulaciones" onClick={()=> setPanelOpen(false)}>Ir</Link>
+        <Link className="btn" to="/mis-postulaciones">Ir</Link>
       </div>
     </div>
   );
   const EvaluacionesBlock = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div>
         <div style={{ fontWeight: 600 }}>Mis evaluaciones</div>
         <div className="text-muted">Revisa las asignadas y registra resultados.</div>
@@ -52,17 +50,17 @@ export default function ProfilePage() {
         <span className="chip" title="Total">
           {counts.evaluaciones === undefined ? '—' : counts.evaluaciones === null ? 'N/A' : counts.evaluaciones}
         </span>
-        <Link className="btn" to="/mis-evaluaciones" onClick={()=> setPanelOpen(false)}>Ir</Link>
+        <Link className="btn" to="/mis-evaluaciones">Ir</Link>
       </div>
     </div>
   );
   const AdminBlock = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div>
         <div style={{ fontWeight: 600 }}>Administración</div>
         <div className="text-muted">Gestiona convocatorias, ítems, baremos y asignaciones.</div>
       </div>
-      <Link className="btn" to="/admin" onClick={()=> setPanelOpen(false)}>Ir</Link>
+      <Link className="btn" to="/admin">Ir</Link>
     </div>
   );
 
@@ -116,18 +114,30 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
-            <div className="muted">Último acceso: —</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn" onClick={() => setPanelOpen(true)}>Panel</button>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+            <button className="btn" onClick={() => setEditing(true)}>Editar perfil</button>
           </div>
         </div>
 
-        {/* Accesos rápidos según rol */}
+        {/* Accesos rápidos según rol integrados en la página */}
         <div className="card" style={{ width: '100%', maxWidth: 720, marginTop: 12 }}>
           <h3 style={{ marginBottom: 8 }}>Accesos rápidos</h3>
-          <div className="text-muted">Usa el botón “Panel” para ver tus atajos y acciones según tu rol.</div>
+          <div className="grid" style={{ gap: 16 }}>
+            {effectiveRole === 'admin' && AdminBlock}
+            {effectiveRole === 'evaluador' && EvaluacionesBlock}
+            {effectiveRole === 'postulante' && PostulacionesBlock}
+            {effectiveRole === 'none' && (
+              <div className="text-muted">Tu cuenta aún no tiene roles asociados. Contacta al administrador.</div>
+            )}
+            {/* Acción de editar perfil siempre disponible */}
+            <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontWeight: 600 }}>Editar perfil</div>
+                <div className="text-muted">Actualiza tu información personal.</div>
+              </div>
+              <button className="btn" onClick={() => setEditing(true)}>Abrir</button>
+            </div>
+          </div>
         </div>
       </main>
       {editing && (
@@ -205,27 +215,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-      <Drawer open={panelOpen} onClose={() => setPanelOpen(false)} title="Panel de acciones">
-        <div className="stack">
-          {/* Acciones según un solo rol efectivo */}
-          {effectiveRole === 'admin' && AdminBlock}
-          {effectiveRole === 'evaluador' && EvaluacionesBlock}
-          {effectiveRole === 'postulante' && PostulacionesBlock}
-          {effectiveRole === 'none' && (
-            <div className="text-muted">Tu cuenta aún no tiene roles asociados. Contacta al administrador.</div>
-          )}
-
-          {/* Account actions at the bottom */}
-          <hr style={{ border: 0, borderTop: '1px solid var(--border)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontWeight: 600 }}>Editar perfil</div>
-              <div className="text-muted">Actualiza tu información personal.</div>
-            </div>
-            <button className="btn" onClick={() => { setPanelOpen(false); setEditing(true); }}>Abrir</button>
-          </div>
-        </div>
-      </Drawer>
       <Footer />
     </div>
   );

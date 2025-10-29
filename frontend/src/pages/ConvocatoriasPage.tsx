@@ -3,7 +3,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 type Convocatoria = {
   id: number;
@@ -25,6 +25,7 @@ export default function ConvocatoriasPage() {
   const isPostulante = roleNames.includes('postulante');
   const effectiveRole: 'admin' | 'evaluador' | 'postulante' | 'none' = isAdmin ? 'admin' : (isEvaluador ? 'evaluador' : (isPostulante ? 'postulante' : 'none'));
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -97,10 +98,18 @@ export default function ConvocatoriasPage() {
                     <Link className="btn" to={`/mis-evaluaciones?convocatoria=${c.id}`}>Ver asignadas</Link>
                   )}
                   {effectiveRole === 'postulante' && (
-                    <Link className="btn" to={`/mis-postulaciones?convocatoria=${c.id}`}>Postular</Link>
+                    <button className="btn" onClick={() => navigate(`/mis-postulaciones?convocatoria=${c.id}`)}>Inscribirse</button>
                   )}
                   {!isAuthenticated && (
-                    <span className="text-muted">Inicia sesión para postular</span>
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        const dest = `/mis-postulaciones?convocatoria=${c.id}`;
+                        try { sessionStorage.setItem('auth_next', dest); } catch {}
+                        const evt = new CustomEvent('open-auth-modal', { detail: { mode: 'login', next: dest } });
+                        window.dispatchEvent(evt);
+                      }}
+                    >Inscribirse</button>
                   )}
                 </div>
               </div>

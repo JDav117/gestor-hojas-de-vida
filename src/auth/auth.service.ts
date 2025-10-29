@@ -26,7 +26,7 @@ export class AuthService {
     if (!user) throw new BadRequestException('Credenciales inválidas');
     const isMatch = await bcrypt.compare(loginDto.password, user.password_hash);
     if (!isMatch) throw new BadRequestException('Credenciales inválidas');
-    const payload = { sub: user.id, email: user.email, roles: user.roles.map(r => r.nombre_rol) };
+    const payload = { sub: user.id, email: user.email, roles: user.roles.map(r => (r.nombre_rol || '').toLowerCase()) };
     return {
       access_token: this.jwtService.sign(payload),
       user: { id: user.id, email: user.email, nombre: user.nombre, apellido: user.apellido, roles: user.roles },

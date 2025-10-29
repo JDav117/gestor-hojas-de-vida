@@ -29,6 +29,14 @@ export default function MisPostulaciones() {
       setLoading(true);
       setError(null);
       try {
+        // Si venimos con una convocatoria destino, intenta crear/recuperar borrador primero
+        if (targetConvId) {
+          try {
+            await api.post(`/postulaciones/draft/${targetConvId}`);
+          } catch (e) {
+            // Ignorar si ya existe o si backend no soporta; continuamos a listar
+          }
+        }
         const { data } = await api.get<Postulacion[]>('/postulaciones');
         setItems(data);
       } catch (e: any) {
@@ -37,7 +45,7 @@ export default function MisPostulaciones() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [targetConvId]);
 
   const filtered = useMemo(() => {
     if (!targetConvId) return items;
@@ -69,6 +77,7 @@ export default function MisPostulaciones() {
                   <th>Programa</th>
                   <th>Fecha</th>
                   <th>Estado</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -79,6 +88,13 @@ export default function MisPostulaciones() {
                     <td>{p.programa_id}</td>
                     <td>{new Date(p.fecha_postulacion).toLocaleString()}</td>
                     <td>{p.estado}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      {p.estado === 'borrador' ? (
+                        <Link className="btn btn-primary" to={`/postulaciones/${p.id}`}>Continuar</Link>
+                      ) : (
+                        <Link className="btn" to={`/postulaciones/${p.id}`}>Ver</Link>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

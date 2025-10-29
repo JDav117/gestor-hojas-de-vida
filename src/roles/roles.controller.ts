@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, ForbiddenException } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -9,6 +9,15 @@ import { RolesGuard } from '../common/roles.guard';
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
+
+  // Endpoint de seed solo para desarrollo/test
+  @Post('init')
+  async init() {
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('Endpoint no disponible en producción');
+    }
+    return this.rolesService.createInitialRoles(['admin', 'postulante', 'evaluador']);
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
-export default function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function LoginForm({ onSuccess, title = 'Iniciar sesión', showTitle = true }: { onSuccess?: () => void; title?: string; showTitle?: boolean }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +26,7 @@ export default function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <form onSubmit={onSubmit} className="stack" style={{ minWidth: 320 }}>
+      {showTitle && <h3 className="modal-title">{title}</h3>}
       <div className="input-group">
         <span className="input-icon" aria-hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16v12H4z" stroke="currentColor" strokeWidth="1.5"/><path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.5"/></svg>

@@ -8,13 +8,11 @@ import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesModule } from '../roles/roles.module';
-import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
 		imports: [
 			UsersModule,
 			RolesModule,
-      ThrottlerModule.forRoot([{ ttl: 60, limit: 10 }]),
 			JwtModule.registerAsync({
 				imports: [ConfigModule],
 				useFactory: async (configService: ConfigService) => ({

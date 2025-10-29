@@ -8,7 +8,9 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import Loader from './components/Loader';
 import HomePage from './pages/HomePage';
+import ForbiddenPage from './pages/ForbiddenPage';
 import MisPostulaciones from './pages/MisPostulaciones';
+import PostulacionEditor from './pages/PostulacionEditor';
 import MisEvaluaciones from './pages/MisEvaluaciones';
 import ConvocatoriasPage from './pages/ConvocatoriasPage';
 import './styles/theme.css';
@@ -27,7 +29,10 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
     const names = (user?.roles || []).map((r: any) => String(r?.nombre_rol ?? r).toLowerCase());
     const target = roles.map((r) => r.toLowerCase());
     const allowed = target.some((r) => names.includes(r));
-    if (!allowed) return <Navigate to="/" replace />;
+    if (!allowed) {
+      const next = encodeURIComponent(location.pathname + (location.search || ''));
+      return <Navigate to={`/403?from=${next}`} replace />;
+    }
   }
   return <>{children}</>;
 }
@@ -45,8 +50,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route
               path="/mis-postulaciones"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={["admin","postulante"]}>
                   <MisPostulaciones />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/postulaciones/:id"
+              element={
+                <ProtectedRoute>
+                  <PostulacionEditor />
                 </ProtectedRoute>
               }
             />
@@ -66,6 +79,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 </ProtectedRoute>
               }
             />
+            <Route path="/403" element={<ForbiddenPage />} />
             <Route
               path="/perfil"
               element={

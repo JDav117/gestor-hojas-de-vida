@@ -1,22 +1,17 @@
-import { IsNumber, IsString, IsDate, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 
 export class CreatePostulacionDto {
+  @IsOptional()
   @IsNumber()
-  postulante_id: number;
+  postulante_id?: number;
 
   @IsNumber()
   convocatoria_id: number;
 
-  @IsNumber()
-  programa_id: number;
-
-  @IsDate()
-  fecha_postulacion: Date;
-
-  @IsString()
-  estado: string;
-
   @IsOptional()
-  @IsString()
-  disponibilidad_horaria?: string;
+  @IsNumber()
+  programa_id?: number;
+
+  // disponibilidad_horaria puede enviarse opcionalmente en creación
+  // y será validada/normalizada en el servicio si aplica.
 }

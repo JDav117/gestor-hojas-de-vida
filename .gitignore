@@ -2,6 +2,10 @@
 /dist
 /node_modules
 /build
+# frontend output and dependencies
+/frontend/dist
+/frontend/node_modules
+
 
 # Logs
 logs
@@ -41,6 +45,9 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+
+# TypeScript build info
+*.tsbuildinfo
 
 # temp directory
 .temp

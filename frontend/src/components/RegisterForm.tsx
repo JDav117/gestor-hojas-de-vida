@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export default function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function RegisterForm({ onSuccess, title = 'Formulario de registro', showTitle = true }: { onSuccess?: () => void; title?: string; showTitle?: boolean }) {
   const { register } = useAuth();
   const [form, setForm] = useState({ nombre: '', apellido: '', email: '', identificacion: '', password: '' });
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +30,7 @@ export default function RegisterForm({ onSuccess }: { onSuccess?: () => void }) 
 
   return (
     <form onSubmit={onSubmit} className="stack" style={{ minWidth: 320 }}>
+      {showTitle && <h3 className="modal-title">{title}</h3>}
       <div className="input-group">
         <span className="input-icon" aria-hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a5 5 0 100-10 5 5 0 000 10z" stroke="currentColor" strokeWidth="1.5"/><path d="M4 20a8 8 0 1116 0" stroke="currentColor" strokeWidth="1.5"/></svg>
