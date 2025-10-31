@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
 import { Role } from '../roles/role.entity';
+import { CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('usuarios')
 export class User {
@@ -21,6 +22,12 @@ export class User {
   @Column({ unique: true })
   identificacion: string;
 
+  @Column({ nullable: true }) telefono: string;
+  @Column({ default: false }) verificado: boolean;
+  @CreateDateColumn() created_at: Date;
+  @UpdateDateColumn() updated_at: Date;
+
+
   @ManyToMany(() => Role, (role) => role.users, { eager: true })
   @JoinTable({
     name: 'usuario_roles',
@@ -29,3 +36,5 @@ export class User {
   })
   roles: Role[];
 }
+
+

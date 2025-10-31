@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+ 
 
 @Entity('programas_academicos')
 export class ProgramaAcademico {
@@ -23,4 +24,7 @@ export class ProgramaAcademico {
 
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
+  
 }
+ 
+

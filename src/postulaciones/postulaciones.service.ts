@@ -17,7 +17,7 @@ export class PostulacionesService {
     const postulacion = this.postulacionRepository.create({
       ...createPostulacionDto as any,
       estado: (createPostulacionDto as any).estado ?? 'borrador',
-      fecha_postulacion: (createPostulacionDto as any).fecha_postulacion ?? now,
+      fechaPostulacion: (createPostulacionDto as any).fecha_postulacion ?? now,
     } as Partial<Postulacion>);
     return await this.postulacionRepository.save(postulacion);
   }
@@ -28,15 +28,15 @@ export class PostulacionesService {
 
   async findFiltered(filters: { convocatoria_id?: number; estado?: string; postulante_id?: number; programa_id?: number }): Promise<Postulacion[]> {
     const where: any = {};
-    if (typeof filters.postulante_id === 'number') where.postulante_id = filters.postulante_id;
-    if (typeof filters.convocatoria_id === 'number') where.convocatoria_id = filters.convocatoria_id;
-    if (typeof filters.programa_id === 'number') where.programa_id = filters.programa_id;
+    if (typeof filters.postulante_id === 'number') where.postulante = { id: filters.postulante_id };
+    if (typeof filters.convocatoria_id === 'number') where.convocatoria = { id: filters.convocatoria_id };
+    if (typeof filters.programa_id === 'number') where.programa = { id: filters.programa_id };
     if (filters.estado) where.estado = filters.estado;
     return this.postulacionRepository.find({ where });
   }
 
   async findAllForPostulante(postulanteId: number): Promise<Postulacion[]> {
-    return this.postulacionRepository.find({ where: { postulante_id: postulanteId } });
+    return this.postulacionRepository.find({ where: { postulante: { id: postulanteId } } });
   }
 
   async findByIds(ids: number[]): Promise<Postulacion[]> {
@@ -58,25 +58,25 @@ export class PostulacionesService {
   }
 
   async findOrCreateDraft(postulanteId: number, convocatoriaId: number): Promise<Postulacion> {
-    const existing = await this.postulacionRepository.findOne({ where: { postulante_id: postulanteId, convocatoria_id: convocatoriaId, estado: 'borrador' } });
+    const existing = await this.postulacionRepository.findOne({ where: { postulante: { id: postulanteId }, convocatoria: { id: convocatoriaId }, estado: 'borrador' } });
     if (existing) return existing;
     const draft = this.postulacionRepository.create({
-      postulante_id: postulanteId,
-      convocatoria_id: convocatoriaId,
-      programa_id: null as any,
+      postulante: { id: postulanteId } as any,
+      convocatoria: { id: convocatoriaId } as any,
+      programa: null as any,
       estado: 'borrador',
-      fecha_postulacion: new Date(),
+      fechaPostulacion: new Date(),
     } as Partial<Postulacion>);
     return await this.postulacionRepository.save(draft);
   }
 
   async submit(id: number, postulanteId: number): Promise<Postulacion> {
-    const current = await this.findOne(id);
+    const current = await this.postulacionRepository.findOne({ where: { id }, relations: ['postulante', 'programa'] });
     if (!current) throw new Error('Postulación no encontrada');
-    if (current.postulante_id !== postulanteId) throw new Error('No autorizado');
-    if (!current.programa_id) throw new Error('Debes seleccionar un programa antes de enviar');
+    if (!current.postulante || current.postulante.id !== postulanteId) throw new Error('No autorizado');
+    if (!current.programa) throw new Error('Debes seleccionar un programa antes de enviar');
     current.estado = 'enviado';
-    current.fecha_postulacion = new Date();
+    current.fechaPostulacion = new Date();
     await this.postulacionRepository.save(current);
     return current;
   }
