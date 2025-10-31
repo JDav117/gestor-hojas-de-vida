@@ -32,7 +32,7 @@ import { APP_GUARD } from '@nestjs/core';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       autoLoadEntities: true,
-      synchronize: true, // Solo para desarrollo
+      synchronize: false, // Solo para desarrollo
     }),
   UsersModule,
   RolesModule,
