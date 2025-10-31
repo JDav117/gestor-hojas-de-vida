@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Postulacion } from '../postulaciones/postulacion.entity';
 
 @Entity('documentos')
 export class Documento {
@@ -7,6 +8,10 @@ export class Documento {
 
   @Column()
   postulacion_id: number;
+
+  @ManyToOne(() => Postulacion, (p) => p.documentos, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'postulacion_id' })
+  postulacion: Postulacion;
 
   @Column()
   nombre_documento: string;

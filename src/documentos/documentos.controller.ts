@@ -25,7 +25,7 @@ export class DocumentosController {
     const isAdmin = roles.includes('admin');
     if (!isAdmin) {
       const postulacion = await this.postulacionesService.findOne(createDocumentoDto.postulacion_id);
-      if (!postulacion || postulacion.postulante_id !== user.userId) {
+      if (!postulacion || postulacion.postulante.id !== user.userId) {
         throw new ForbiddenException('No puedes adjuntar documentos a postulaciones de otros usuarios');
       }
     }
@@ -59,7 +59,7 @@ export class DocumentosController {
     const user = req.user;
     const roles = Array.isArray(user?.roles) ? user.roles.map((r: any) => typeof r === 'string' ? r : r.nombre_rol) : [];
     const isAdmin = roles.includes('admin');
-    if (postulacion.postulante_id === user.userId) return documento;
+    if (postulacion.postulante.id === user.userId) return documento;
     if (isAdmin) return documento;
     if (roles.includes('evaluador')) {
       const assigned = await this.asignacionesService.isAssigned(user.userId, postulacion.id);
@@ -82,7 +82,7 @@ export class DocumentosController {
     if (!postulacion) throw new ForbiddenException('Postulación asociada no encontrada');
     const user = req.user;
     const isAdmin = Array.isArray(user.roles) && (user.roles.includes('admin') || user.roles.some((r: any) => r.nombre_rol === 'admin'));
-    if (postulacion.postulante_id !== user.userId && !isAdmin) {
+    if (postulacion.postulante.id !== user.userId && !isAdmin) {
       throw new ForbiddenException('No tienes permiso para modificar este documento');
     }
     return this.documentosService.update(id, updateDocumentoDto);
@@ -96,7 +96,7 @@ export class DocumentosController {
     if (!postulacion) throw new ForbiddenException('Postulación asociada no encontrada');
     const user = req.user;
     const isAdmin = Array.isArray(user.roles) && (user.roles.includes('admin') || user.roles.some((r: any) => r.nombre_rol === 'admin'));
-    if (postulacion.postulante_id !== user.userId && !isAdmin) {
+    if (postulacion.postulante.id !== user.userId && !isAdmin) {
       throw new ForbiddenException('No tienes permiso para eliminar este documento');
     }
     return this.documentosService.remove(id);
