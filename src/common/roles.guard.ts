@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
 
@@ -11,23 +17,41 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+
     if (!requiredRoles || requiredRoles.length === 0) {
-      return true; // No roles required
+      return true;
     }
-    const { user } = context.switchToHttp().getRequest();
-    if (!user || !user.roles) {
-      throw new ForbiddenException('No roles found');
+
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no autenticado');
     }
-    const userRoles = Array.isArray(user.roles)
-      ? user.roles.map((r: any) => typeof r === 'string' ? r : r.nombre_rol || r.name || r)
-      : [];
-    // Comparación case-insensitive para evitar fallos por mayúsculas/minúsculas
-    const userRolesLc = userRoles.map((v: any) => String(v).toLowerCase());
-    const requiredLc = requiredRoles.map(r => String(r).toLowerCase());
-    const hasRole = requiredLc.some(role => userRolesLc.includes(role));
+
+    if (!user.roles || !Array.isArray(user.roles) || user.roles.length === 0) {
+      throw new ForbiddenException('El usuario no tiene roles asignados');
+    }
+
+    const userRoles = user.roles.map((role: string | { nombre_rol: string }) => {
+      const roleName = typeof role === 'string' ? role : role.nombre_rol;
+      return roleName.trim().toLowerCase();
+    });
+
+    const normalizedRequiredRoles = requiredRoles.map((role: string) => 
+      role.trim().toLowerCase()
+    );
+
+    const hasRole = normalizedRequiredRoles.some((requiredRole: string) => 
+      userRoles.includes(requiredRole)
+    );
+
     if (!hasRole) {
-      throw new ForbiddenException('You do not have the required role');
+      throw new ForbiddenException(
+        `Acceso denegado. Se requiere uno de los siguientes roles: ${requiredRoles.join(', ')}`
+      );
     }
+
     return true;
   }
 }
