@@ -1,0 +1,59 @@
+### Crear un usuario nuevo
+POST http://localhost:3000/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoiY2FybG9zQGVtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImlhdCI6MTc2MTg2NTQwNiwiZXhwIjoxNzYxOTUxODA2fQ.wQSpReP0AcvMkFor6JSqBDEoTizYyxPQZWn9QvMzJb4
+Content-Type: application/json
+
+{
+  "nombre": "Fernando",
+  "apellido": "Jimenez",
+  "email": "fernando@email.com",
+  "password": "Fernando123.",
+  "identificacion": "1231345595"
+}
+
+### Iniciar sesión
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "fernando@email.com",
+  "password": "Fernando123."
+}
+
+
+### Iniciar sesión
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "carlos@email.com",
+  "password": "Carlos123."
+}
+
+###
+
+
+POST http://localhost:3000/evaluaciones
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoiY2FybG9zQGVtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImlhdCI6MTc2MTg3ODE4NSwiZXhwIjoxNzYxOTY0NTg1fQ.6nJ8p2k7hOUqoyBmQDqLKchz4060vJfn0ClLoVqL8r0
+###
+
+GET http://localhost:3000/evaluaciones 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoiY2FybG9zQGVtYWlsLmNvbSIsInJvbGVzIjpbImFkbWluIl0sImlhdCI6MTc2MTk0OTYyMSwiZXhwIjoxNzYyMDM2MDIxfQ.1cmMK2eJJ_WbccpN95dyTZxRoCM0-27iLJgTTQ5SV20
+Content-Type: 'application/json'
+###
+
+### Actualizar un usuario (requiere token)
+PUT http://localhost:3000/users/5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoiY2FybG9zQGVtYWlsLmNvbSIsInJvbGVzIjpbImV2YWx1YWRvciAiXSwiaWF0IjoxNzYxODYwNDA5LCJleHAiOjE3NjE5NDY4MDl9._2_4S9tAhZIJ60mMmMwGBw8ewa-n-LWlNEHIi-gu6oI
+Content-Type: application/json
+
+{
+  "roles":[3]
+}
+
+###
+
+###  Eliminar un usuario (requiere token)
+DELETE http://localhost:3000/users/1
+Authorization: Bearer 
+Content-Type: application/json
