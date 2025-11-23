@@ -12,6 +12,9 @@ export class CreatePostulacionDto {
   @IsNumber()
   programa_id?: number;
 
+  fecha_postulacion?: Date;
+  disponibilidad_horaria: string;
+
   // disponibilidad_horaria puede enviarse opcionalmente en creación
   // y será validada/normalizada en el servicio si aplica.
 }

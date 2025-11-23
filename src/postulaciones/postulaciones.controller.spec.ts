@@ -5,18 +5,27 @@ import { CreatePostulacionDto } from './dto/create-postulacion.dto';
 import { UpdatePostulacionDto } from './dto/update-postulacion.dto';
 
 const postulacionesArray = [
-  { id: 1, postulante_id: 1, convocatoria_id: 1, programa_id: 1, fecha_postulacion: new Date('2025-09-01'), estado: 'pendiente', disponibilidad_horaria: 'mañana' },
-  { id: 2, postulante_id: 2, convocatoria_id: 1, programa_id: 2, fecha_postulacion: new Date('2025-09-02'), estado: 'aceptada', disponibilidad_horaria: 'tarde' },
+  { id: 1, postulante_id: 1, convocatoria_id: 1, programa_id: 1, fecha_postulacion: new Date('2025-09-01'), disponibilidad_horaria: 'mañana' },
+  { id: 2, postulante_id: 2, convocatoria_id: 1, programa_id: 2, fecha_postulacion: new Date('2025-09-02'), disponibilidad_horaria: 'tarde' },
 ];
 
 const onePostulacion = postulacionesArray[0];
 
+// Mock del servicio real
 const mockPostulacionesService = {
   create: jest.fn(dto => ({ id: 3, ...dto })),
   findAll: jest.fn(() => postulacionesArray),
   findOne: jest.fn(id => postulacionesArray.find(p => p.id === id)),
   update: jest.fn((id, dto) => ({ ...onePostulacion, ...dto })),
   remove: jest.fn(id => undefined),
+};
+
+// Mock del request con user
+const mockReq = {
+  user: {
+    userId: 1,
+    roles: ['admin']
+  }
 };
 
 describe('PostulacionesController', () => {
@@ -43,28 +52,28 @@ describe('PostulacionesController', () => {
       convocatoria_id: 1,
       programa_id: 1,
       fecha_postulacion: new Date('2025-09-10'),
-      estado: 'pendiente',
       disponibilidad_horaria: 'mañana',
     };
-    expect(await controller.create(dto)).toEqual({ id: 3, ...dto });
+
+    expect(await controller.create(dto, mockReq)).toEqual({ id: 3, ...dto });
   });
 
   it('should return all postulaciones', async () => {
-    expect(await controller.findAll()).toEqual(postulacionesArray);
-  });
+    expect(await controller.findAll(mockReq)).toEqual(postulacionesArray);
+   });
 
   it('should return one postulacion', async () => {
-    expect(await controller.findOne(1)).toEqual(onePostulacion);
-  });
+  const mockReq = { user: { userId: 1, roles: ['admin'] } };
+  expect(await controller.findOne(1, mockReq)).toEqual(onePostulacion);
+   });
 
   it('should update a postulacion', async () => {
-    const dto: UpdatePostulacionDto = { estado: 'aceptada' };
-    const req = { user: { userId: 1, roles: ['admin'] } };
-    expect(await controller.update(1, dto, req)).toEqual({ ...onePostulacion, ...dto });
-  });
+    const dto: UpdatePostulacionDto = { disponibilidad_horaria: 'tarde' };
+    expect(await controller.update(1, dto, mockReq)).toEqual({ ...onePostulacion, ...dto });
+   });
 
   it('should remove a postulacion', async () => {
-    const req = { user: { userId: 1, roles: ['admin'] } };
-    expect(await controller.remove(1, req)).toBeUndefined();
+    expect(await controller.remove(1, mockReq)).toBeUndefined();
+   });
   });
-});
+
