@@ -37,7 +37,8 @@ export class PaginationDto {
    * Calcula el offset para la consulta SQL
    */
   get offset(): number {
-    return (this.page - 1) * this.limit;
+    return ((this.page ?? 1) - 1) * (this.limit ?? 10);
+
   }
 }
 

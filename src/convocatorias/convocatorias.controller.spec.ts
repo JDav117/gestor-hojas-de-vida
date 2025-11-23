@@ -42,9 +42,8 @@ describe('ConvocatoriasController', () => {
       nombre: 'Nueva',
       fecha_apertura: new Date('2025-11-01'),
       fecha_cierre: new Date('2025-11-30'),
-      estado: 'abierta',
     };
-    expect(await controller.create(dto)).toEqual({ id: 3, ...dto });
+    expect(await controller.create(dto)).toEqual({ id: 3, ...dto, estado: 'abierta', });
   });
 
   it('should return all convocatorias', async () => {
@@ -56,7 +55,7 @@ describe('ConvocatoriasController', () => {
   });
 
   it('should update a convocatoria', async () => {
-    const dto: UpdateConvocatoriaDto = { estado: 'cerrada' };
+    const dto: UpdateConvocatoriaDto = { nombre: 'Actualizada' };
     expect(await controller.update(1, dto)).toEqual({ ...oneConvocatoria, ...dto });
   });
 
