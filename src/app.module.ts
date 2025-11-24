@@ -30,9 +30,9 @@ import { APP_GUARD } from '@nestjs/core';
       port: parseInt(process.env.DB_PORT || '3306', 10), // Default to 3306 if undefined
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
+      database: process.env.DB_NAME,
       autoLoadEntities: true,
-      synchronize: false, // Solo para desarrollo
+      synchronize: false, // True Solo para desarrollo
     }),
   UsersModule,
   RolesModule,

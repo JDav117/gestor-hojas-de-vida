@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaremoConvocatoria } from './baremo-convocatoria.entity';
 import { CreateBaremoConvocatoriaDto } from './dto/create-baremo-convocatoria.dto';
+import { UpdateBaremoConvocatoriaDto } from './dto/update-baremo-convocatoria.dto';
 
 @Injectable()
 export class BaremoConvocatoriaService {
@@ -10,10 +11,10 @@ export class BaremoConvocatoriaService {
     @InjectRepository(BaremoConvocatoria)
     private readonly baremoConvocatoriaRepository: Repository<BaremoConvocatoria>,
   ) {}
-  
+
   async create(createBaremoConvocatoriaDto: CreateBaremoConvocatoriaDto): Promise<BaremoConvocatoria> {
     const baremo = this.baremoConvocatoriaRepository.create(createBaremoConvocatoriaDto);
-    return await this.baremoConvocatoriaRepository.save(baremo);
+    return this.baremoConvocatoriaRepository.save(baremo);
   }
 
   async findAll(): Promise<BaremoConvocatoria[]> {
@@ -24,7 +25,10 @@ export class BaremoConvocatoriaService {
     return this.baremoConvocatoriaRepository.findOneBy({ id });
   }
 
-  async update(id: number, updateBaremoConvocatoriaDto: any): Promise<BaremoConvocatoria | null> {
+  async update(
+    id: number,
+    updateBaremoConvocatoriaDto: UpdateBaremoConvocatoriaDto,
+  ): Promise<BaremoConvocatoria | null> {
     await this.baremoConvocatoriaRepository.update(id, updateBaremoConvocatoriaDto);
     return this.findOne(id);
   }
