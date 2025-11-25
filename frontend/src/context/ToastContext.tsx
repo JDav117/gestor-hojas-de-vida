@@ -9,6 +9,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const show = useCallback((message: string, type: Toast['type']='info') => {
     setToasts((curr) => [...curr, { id: Date.now()+Math.random(), type, message }]);
   }, []);
+  
+  // Escuchar eventos globales de errores del interceptor de Axios
+  useEffect(() => {
+    const handleToastEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ message: string; type: Toast['type'] }>;
+      show(customEvent.detail.message, customEvent.detail.type);
+    };
+    
+    window.addEventListener('show-toast', handleToastEvent);
+    return () => window.removeEventListener('show-toast', handleToastEvent);
+  }, [show]);
+  
   useEffect(() => {
     if (toasts.length === 0) return;
     const timers = toasts.map(t => setTimeout(() => setToasts(curr => curr.filter(x => x.id !== t.id)), 3200));

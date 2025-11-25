@@ -4,10 +4,10 @@ import { ItemsEvaluacionService } from './items-evaluacion.service';
 import { CreateItemEvaluacionDto } from './dto/create-item-evaluacion.dto';
 import { UpdateItemEvaluacionDto } from './dto/update-item-evaluacion.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../common/roles.guard';
+import { JwtRolesGuard } from '../common/jwt-roles.guard';
 import { Roles } from '../common/roles.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtRolesGuard)
 @Controller('items-evaluacion')
 export class ItemsEvaluacionController {
   constructor(private readonly itemsEvaluacionService: ItemsEvaluacionService) {}

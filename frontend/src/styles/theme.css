@@ -99,8 +99,9 @@ p { margin: 0 0 12px; color: var(--muted); }
 .input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
 .stack { display: grid; gap: 10px; }
 
-/* selects and inputs share style */
+/* selects, inputs, and textareas share style */
 select.input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+textarea.input, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; font-family: inherit; resize: vertical; }
 input[type="datetime-local"].input { padding-right: 8px; }
 
 /* Input groups with leading icons */
@@ -122,11 +123,17 @@ input[type="datetime-local"].input { padding-right: 8px; }
 /* Centered modal */
 .modal-root { position: fixed; inset: 0; z-index: 1600; display: grid; place-items: center; }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); }
-.modal { position: relative; width: calc(100% - 24px); max-width: 520px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.24); animation: modal-in 160ms ease-out; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 1600; display: grid; place-items: center; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); animation: fade-in 160ms ease-out; }
+.modal { position: relative; width: calc(100% - 24px); max-width: 720px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.24); animation: modal-in 160ms ease-out; }
 .modal-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
 .modal-body { padding: 16px; }
+.modal-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: #f9fafb; }
 .modal-close { position: absolute; top: 10px; right: 10px; }
+.btn-close { background: transparent; border: none; font-size: 28px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: var(--muted); display: grid; place-items: center; }
+.btn-close:hover { background: #f3f4f6; color: var(--text); }
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* Inputs: focus ring accesible */
 .input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(31,111,139,0.12); }

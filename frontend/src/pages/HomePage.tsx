@@ -6,10 +6,12 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
+import { getDefaultRouteForRole } from '../utils/roleHelpers';
 
 export default function HomePage() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   // Mostrar login o registro en el modal
   const [wordmarkLoaded, setWordmarkLoaded] = useState<boolean>(false);
   const [wordmarkSrc, setWordmarkSrc] = useState<string>('/brand/letrero-upm.png');
@@ -32,6 +34,26 @@ export default function HomePage() {
       nav(location.pathname, { replace: true });
     }
   }, [location.search]);
+
+  // Redirigir cuando el usuario se cargue después del login
+  useEffect(() => {
+    if (shouldRedirect && user) {
+      setShouldRedirect(false);
+      let dest: string | null = null;
+      try { 
+        const stored = sessionStorage.getItem('auth_next'); 
+        if (stored) { 
+          dest = stored; 
+          sessionStorage.removeItem('auth_next'); 
+        } 
+      } catch {}
+      
+      if (!dest) {
+        dest = getDefaultRouteForRole(user);
+      }
+      nav(dest);
+    }
+  }, [shouldRedirect, user, nav]);
 
   return (
     <div className="container-center" style={{ flexDirection: 'column' }}>
@@ -72,20 +94,12 @@ export default function HomePage() {
         <div className="modal-body">
           {tab === 'login' ? (
             <>
-              <LoginForm onSuccess={() => { 
+              <LoginForm onSuccess={async () => { 
                 setOpen(false);
-                // Redirección por rol efectivo si no hay `next`
-                let dest: string | null = null;
-                try { const stored = sessionStorage.getItem('auth_next'); if (stored) { dest = stored; sessionStorage.removeItem('auth_next'); } } catch {}
-                if (!dest) {
-                  const roles = (user?.roles || []).map((r: any) => String(r?.nombre_rol ?? r).toLowerCase());
-                  const isAdmin = roles.includes('admin');
-                  const isEvaluador = roles.includes('evaluador');
-                  const isPostulante = roles.includes('postulante');
-                  const effectiveRole = isAdmin ? 'admin' : (isEvaluador ? 'evaluador' : (isPostulante ? 'postulante' : 'none'));
-                  dest = effectiveRole === 'admin' ? '/admin' : effectiveRole === 'evaluador' ? '/mis-evaluaciones' : effectiveRole === 'postulante' ? '/mis-postulaciones' : '/perfil';
-                }
-                nav(dest);
+                // Pequeña espera para que React actualice el contexto
+                await new Promise(resolve => setTimeout(resolve, 100));
+                // Activar la redirección - useEffect la manejará cuando user esté listo
+                setShouldRedirect(true);
               }} />
               <div style={{ textAlign: 'center', marginTop: 10 }}>
                 <a className="link" href="#" onClick={(e)=>{ e.preventDefault(); setTab('register'); }}>¿No tienes cuenta? Regístrate</a>

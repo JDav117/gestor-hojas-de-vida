@@ -15,7 +15,9 @@ export default function LoginForm({ onSuccess, title = 'Iniciar sesión', showTi
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      const userData = await login(email, password);
+      // Esperar un tick para que React actualice el contexto
+      await new Promise(resolve => setTimeout(resolve, 0));
       onSuccess?.();
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Error al iniciar sesión');

@@ -6,6 +6,7 @@ import SideNav from './SideNav';
 import Modal from './Modal';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
+import { hasRole } from '../utils/roleHelpers';
 
 export default function Header({ onOpenAuth, showAuthButton = true }: { onOpenAuth?: () => void; showAuthButton?: boolean }) {
   const { isAuthenticated, user, logout } = useAuth();
@@ -39,15 +40,14 @@ export default function Header({ onOpenAuth, showAuthButton = true }: { onOpenAu
   }, []);
 
   const navItems = useMemo(() => {
-    const roleNames = (user?.roles || []).map((r: any) => String(r?.nombre_rol ?? r).toLowerCase());
-    const isAdmin = roleNames.includes('admin');
-    const isEvaluador = roleNames.includes('evaluador');
-    const isPostulante = roleNames.includes('postulante');
+    const isAdmin = hasRole(user, 'admin');
+    const isEvaluador = hasRole(user, 'evaluador');
+    const isPostulante = hasRole(user, 'postulante');
     const items: { key: string; label: string; onClick: () => void }[] = [];
     items.push({ key: 'conv', label: 'Convocatorias', onClick: () => { setOpenNav(false); navigate('/convocatorias'); } });
     if (isAuthenticated) {
       items.push({ key: 'perfil', label: 'Mi cuenta', onClick: () => { setOpenNav(false); navigate('/perfil'); } });
-      if (isPostulante) items.push({ key: 'postu', label: 'Mis postulaciones', onClick: () => { setOpenNav(false); navigate('/mis-postulaciones'); } });
+      if (isPostulante || isAdmin) items.push({ key: 'postu', label: 'Mis postulaciones', onClick: () => { setOpenNav(false); navigate('/mis-postulaciones'); } });
       if (isEvaluador || isAdmin) items.push({ key: 'eval', label: 'Mis evaluaciones', onClick: () => { setOpenNav(false); navigate('/mis-evaluaciones'); } });
       if (isAdmin) items.push({ key: 'admin', label: 'Administración', onClick: () => { setOpenNav(false); navigate('/admin'); } });
     }
@@ -145,19 +145,19 @@ export default function Header({ onOpenAuth, showAuthButton = true }: { onOpenAu
         <div className="modal-body">
           {authTab === 'login' ? (
             <>
-              <LoginForm onSuccess={() => {
+              <LoginForm onSuccess={async () => {
                 setAuthOpen(false);
-                let dest: string | null = null;
-                try { const stored = sessionStorage.getItem('auth_next'); if (stored) { dest = stored; sessionStorage.removeItem('auth_next'); } } catch {}
-                if (!dest) {
-                  const roles = (user?.roles || []).map((r: any) => String(r?.nombre_rol ?? r).toLowerCase());
-                  const isAdmin = roles.includes('admin');
-                  const isEvaluador = roles.includes('evaluador');
-                  const isPostulante = roles.includes('postulante');
-                  const effectiveRole = isAdmin ? 'admin' : (isEvaluador ? 'evaluador' : (isPostulante ? 'postulante' : 'none'));
-                  dest = effectiveRole === 'admin' ? '/admin' : effectiveRole === 'evaluador' ? '/mis-evaluaciones' : effectiveRole === 'postulante' ? '/mis-postulaciones' : '/perfil';
+                // Pequeña espera para que React actualice el contexto
+                await new Promise(resolve => setTimeout(resolve, 100));
+                // Recargar la página actual o ir a perfil
+                const stored = sessionStorage.getItem('auth_next');
+                if (stored) {
+                  sessionStorage.removeItem('auth_next');
+                  navigate(stored);
+                } else {
+                  // Ir a perfil y dejar que el useEffect redirija según el rol
+                  navigate('/perfil');
                 }
-                navigate(dest);
               }} />
               <div style={{ textAlign: 'center', marginTop: 10 }}>
                 <a className="link" href="#" onClick={(e)=>{ e.preventDefault(); setAuthTab('register'); }}>¿No tienes cuenta? Regístrate</a>

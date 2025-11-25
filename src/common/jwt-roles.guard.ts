@@ -6,33 +6,38 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
 import { ROLES_KEY } from './roles.decorator';
 
 @Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+export class JwtRolesGuard extends AuthGuard('jwt') implements CanActivate {
+  constructor(private reflector: Reflector) {
+    super();
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Primero: Ejecutar autenticación JWT
+    const isAuthenticated = await super.canActivate(context);
+    
+    if (!isAuthenticated) {
+      throw new UnauthorizedException('Usuario no autenticado');
+    }
+
+    // Segundo: Verificar roles
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
+    // Si no hay roles requeridos, permitir acceso
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
-    // Pequeña espera para asegurar que JwtAuthGuard terminó
-    await new Promise(resolve => setTimeout(resolve, 10));
-
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    console.log('🔍 RolesGuard - Required roles:', requiredRoles);
-    console.log('👤 RolesGuard - User from request:', user);
-
     if (!user) {
-      console.error('❌ RolesGuard - Usuario no encontrado en request');
       throw new UnauthorizedException('Usuario no autenticado');
     }
 

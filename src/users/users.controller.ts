@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '../common/roles.decorator';
-import { RolesGuard } from '../common/roles.guard';
+import { JwtRolesGuard } from '../common/jwt-roles.guard';
 import { UpdateMeDto } from 'src/users/dto/update-me.dto';
 
 @Controller('users')
@@ -26,21 +26,21 @@ export class UsersController {
   
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   async findOne(@Param('id') id: string) {
     const user = await this.usersService.findOne(Number(id));
@@ -51,14 +51,14 @@ export class UsersController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(Number(id), updateUserDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   remove(@Param('id') id: string) {
     return this.usersService.remove(Number(id));
@@ -72,9 +72,8 @@ export class UsersController {
   async updateMe(@Req() req: any, @Body() body: UpdateMeDto) {
     const userId = req.user?.userId;
     if (!userId) return { statusCode: 401, message: 'Unauthorized' };
-    // Forzar a ignorar campos no permitidos (roles, password)
-    const { nombre, apellido, email, identificacion } = body;
-    const updated = await this.usersService.updateProfile(Number(userId), { nombre, apellido, email, identificacion });
+    // Usar el DTO completo para actualizar el perfil
+    const updated = await this.usersService.updateProfile(Number(userId), body);
     const { password_hash, ...safe } = updated as any;
     return safe;
   }

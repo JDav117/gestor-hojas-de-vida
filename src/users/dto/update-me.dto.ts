@@ -16,4 +16,8 @@ export class UpdateMeDto {
   @IsOptional()
   @IsString()
   identificacion?: string;
+
+  @IsOptional()
+  @IsString()
+  telefono?: string;
 }

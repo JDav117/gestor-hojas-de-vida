@@ -2,8 +2,7 @@ import { Controller, Get, Post, Body, Param, Patch, Delete, ParseIntPipe, UseGua
 import { ConvocatoriasService } from './convocatorias.service';
 import { CreateConvocatoriaDto } from './dto/create-convocatoria.dto';
 import { UpdateConvocatoriaDto } from './dto/update-convocatoria.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../common/roles.guard';
+import { JwtRolesGuard } from '../common/jwt-roles.guard';
 import { Roles } from '../common/roles.decorator';
 
 @Controller('convocatorias')
@@ -11,7 +10,7 @@ export class ConvocatoriasController {
   constructor(private readonly convocatoriasService: ConvocatoriasService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   create(@Body() createConvocatoriaDto: CreateConvocatoriaDto) {
     return this.convocatoriasService.create(createConvocatoriaDto);
@@ -28,7 +27,7 @@ export class ConvocatoriasController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -38,7 +37,7 @@ export class ConvocatoriasController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.convocatoriasService.remove(id);

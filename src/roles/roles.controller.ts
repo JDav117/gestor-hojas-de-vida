@@ -4,7 +4,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../common/roles.decorator';
-import { RolesGuard } from '../common/roles.guard';
+import { JwtRolesGuard } from '../common/jwt-roles.guard';
 
 @Controller('roles')
 export class RolesController {
@@ -20,7 +20,7 @@ export class RolesController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);
@@ -28,14 +28,14 @@ export class RolesController {
 
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   findAll() {
     return this.rolesService.findAll();
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   async findOne(@Param('id') id: string) {
     const role = await this.rolesService.findOne(Number(id));
@@ -46,14 +46,14 @@ export class RolesController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.rolesService.update(Number(id), updateRoleDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin')
   remove(@Param('id') id: string) {
     return this.rolesService.remove(Number(id));

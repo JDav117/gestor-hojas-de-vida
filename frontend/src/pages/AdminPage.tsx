@@ -3,6 +3,7 @@ import api from '../api/client';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useAuth } from '../context/AuthContext';
 
 type Role = { id: number; nombre_rol: string };
 type User = {
@@ -13,22 +14,21 @@ type User = {
   identificacion: string;
   roles?: Role[];
 };
-type Convocatoria = { id: number; nombre: string; descripcion?: string | null; fecha_apertura: string | Date; fecha_cierre: string | Date; estado: string };
+type Convocatoria = { id: number; nombre: string; descripcion?: string | null; fecha_apertura: string | Date; fecha_cierre: string | Date; estado: string; programa_academico_id?: number | null; cupos?: number | null; sede?: string | null; dedicacion?: string | null; tipo_vinculacion?: string | null; requisitos_documentales?: string[] | null; min_puntaje_aprobacion_documental?: number | null; min_puntaje_aprobacion_tecnica?: number | null };
 type Programa = { id: number; nombre_programa: string; facultad?: string | null; nivel?: string | null; modalidad?: string | null; codigo_snies?: string | null; descripcion?: string | null };
 
 export default function AdminPage() {
+  const { user: currentUser } = useAuth();
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [me, setMe] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Convocatorias y postulaciones (gestión y filtros)
   const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
   // CRUD Convocatorias (formulario crear/editar)
-  const [newConv, setNewConv] = useState<{ nombre: string; descripcion: string; apertura: string; cierre: string }>({ nombre: '', descripcion: '', apertura: '', cierre: '' });
+  const [newConv, setNewConv] = useState<{ nombre: string; descripcion: string; apertura: string; cierre: string; programa_academico_id: string; cupos: string; sede: string; dedicacion: string; tipo_vinculacion: string; requisitos_documentales: string; min_puntaje_documental: string; min_puntaje_tecnico: string }>({ nombre: '', descripcion: '', apertura: '', cierre: '', programa_academico_id: '', cupos: '', sede: '', dedicacion: '', tipo_vinculacion: '', requisitos_documentales: '', min_puntaje_documental: '0', min_puntaje_tecnico: '0' });
   const [editingConvId, setEditingConvId] = useState<number | null>(null);
-  const [editConv, setEditConv] = useState<{ nombre: string; descripcion: string; apertura: string; cierre: string }>({ nombre: '', descripcion: '', apertura: '', cierre: '' });
+  const [editConv, setEditConv] = useState<{ nombre: string; descripcion: string; apertura: string; cierre: string; programa_academico_id: string; cupos: string; sede: string; dedicacion: string; tipo_vinculacion: string; requisitos_documentales: string; min_puntaje_documental: string; min_puntaje_tecnico: string }>({ nombre: '', descripcion: '', apertura: '', cierre: '', programa_academico_id: '', cupos: '', sede: '', dedicacion: '', tipo_vinculacion: '', requisitos_documentales: '', min_puntaje_documental: '0', min_puntaje_tecnico: '0' });
   const [postulaciones, setPostulaciones] = useState<Array<{ id: number; postulante_id: number; convocatoria_id: number; programa_id: number | null; estado: string; fecha_postulacion: string }>>([]);
   const [postQuery, setPostQuery] = useState<{ convocatoria?: number | ''; estado?: string; postulante?: number | ''; programa?: number | '' }>({});
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -102,8 +102,12 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get<Convocatoria[]>('/convocatorias');
-      setConvocatorias(data || []);
+      const [convocsRes, progsRes] = await Promise.all([
+        api.get<Convocatoria[]>('/convocatorias'),
+        api.get<Programa[]>('/programas-academicos'),
+      ]);
+      setConvocatorias(convocsRes.data || []);
+      setProgramas(progsRes.data || []);
     } catch (e: any) {
       setError(e?.response?.data?.message || e.message || 'Error cargando convocatorias');
     } finally {
@@ -123,24 +127,10 @@ export default function AdminPage() {
     }
   };
 
-  // Verificar que el usuario autenticado sea admin
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get<User>('/users/me');
-        setMe(data);
-        const roleNames = (data.roles || []).map((r: any) => r?.nombre_rol || r).map((s: any) => String(s).toLowerCase());
-        const admin = roleNames.includes('admin');
-        setIsAdmin(admin);
-        if (!admin) {
-          // Si no es admin, redirige o muestra mensaje
-          navigate('/');
-        }
-      } catch (e: any) {
-        setError(e?.response?.data?.message || e.message || 'No se pudo validar la sesión');
-      }
-    })();
-  }, [navigate]);
+  // Verificar que el usuario autenticado sea admin (ya validado por ProtectedRoute, esto es redundante pero por claridad)
+  const isAdmin = (currentUser?.roles || [])
+    .map((r: any) => String(r?.nombre_rol ?? r).toLowerCase())
+    .includes('admin');
 
   // Cargar postulaciones con filtros (solo admin)
   const loadPostulaciones = async (q?: { convocatoria?: number | ''; estado?: string; postulante?: number | ''; programa?: number | '' }) => {
@@ -219,13 +209,22 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
+      const requisitos = newConv.requisitos_documentales.trim() ? newConv.requisitos_documentales.split(',').map(r => r.trim()).filter(Boolean) : [];
       await api.post('/convocatorias', {
         nombre: newConv.nombre.trim(),
         descripcion: newConv.descripcion?.trim() || undefined,
         fecha_apertura: toIso(newConv.apertura),
         fecha_cierre: toIso(newConv.cierre),
+        programa_academico_id: newConv.programa_academico_id ? Number(newConv.programa_academico_id) : undefined,
+        cupos: newConv.cupos ? Number(newConv.cupos) : undefined,
+        sede: newConv.sede?.trim() || undefined,
+        dedicacion: newConv.dedicacion?.trim() || undefined,
+        tipo_vinculacion: newConv.tipo_vinculacion?.trim() || undefined,
+        requisitos_documentales: requisitos.length > 0 ? requisitos : undefined,
+        min_puntaje_aprobacion_documental: newConv.min_puntaje_documental ? Number(newConv.min_puntaje_documental) : 0,
+        min_puntaje_aprobacion_tecnica: newConv.min_puntaje_tecnico ? Number(newConv.min_puntaje_tecnico) : 0,
       });
-      setNewConv({ nombre: '', descripcion: '', apertura: '', cierre: '' });
+      setNewConv({ nombre: '', descripcion: '', apertura: '', cierre: '', programa_academico_id: '', cupos: '', sede: '', dedicacion: '', tipo_vinculacion: '', requisitos_documentales: '', min_puntaje_documental: '0', min_puntaje_tecnico: '0' });
       await loadConvocatoriasOnly();
     } catch (e: any) {
       setError(e?.response?.data?.message || e.message || 'Error creando convocatoria');
@@ -245,17 +244,26 @@ export default function AdminPage() {
       const pad = (n: number) => String(n).padStart(2, '0');
       return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
     };
+    const requisitos = Array.isArray(c.requisitos_documentales) ? c.requisitos_documentales.join(', ') : '';
     setEditConv({
       nombre: c.nombre,
       descripcion: c.descripcion ?? '',
       apertura: toLocal(ap),
       cierre: toLocal(ci),
+      programa_academico_id: c.programa_academico_id ? String(c.programa_academico_id) : '',
+      cupos: c.cupos ? String(c.cupos) : '',
+      sede: c.sede ?? '',
+      dedicacion: c.dedicacion ?? '',
+      tipo_vinculacion: c.tipo_vinculacion ?? '',
+      requisitos_documentales: requisitos,
+      min_puntaje_documental: c.min_puntaje_aprobacion_documental ? String(c.min_puntaje_aprobacion_documental) : '0',
+      min_puntaje_tecnico: c.min_puntaje_aprobacion_tecnica ? String(c.min_puntaje_aprobacion_tecnica) : '0',
     });
   };
 
   const cancelEditConv = () => {
     setEditingConvId(null);
-  setEditConv({ nombre: '', descripcion: '', apertura: '', cierre: '' });
+  setEditConv({ nombre: '', descripcion: '', apertura: '', cierre: '', programa_academico_id: '', cupos: '', sede: '', dedicacion: '', tipo_vinculacion: '', requisitos_documentales: '', min_puntaje_documental: '0', min_puntaje_tecnico: '0' });
   };
 
   const saveEditConv = async () => {
@@ -263,11 +271,20 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
+      const requisitos = editConv.requisitos_documentales.trim() ? editConv.requisitos_documentales.split(',').map(r => r.trim()).filter(Boolean) : [];
       await api.patch(`/convocatorias/${editingConvId}`, {
         nombre: editConv.nombre.trim(),
         descripcion: editConv.descripcion?.trim() || undefined,
         fecha_apertura: toIso(editConv.apertura),
         fecha_cierre: toIso(editConv.cierre),
+        programa_academico_id: editConv.programa_academico_id ? Number(editConv.programa_academico_id) : undefined,
+        cupos: editConv.cupos ? Number(editConv.cupos) : undefined,
+        sede: editConv.sede?.trim() || undefined,
+        dedicacion: editConv.dedicacion?.trim() || undefined,
+        tipo_vinculacion: editConv.tipo_vinculacion?.trim() || undefined,
+        requisitos_documentales: requisitos.length > 0 ? requisitos : undefined,
+        min_puntaje_aprobacion_documental: editConv.min_puntaje_documental ? Number(editConv.min_puntaje_documental) : 0,
+        min_puntaje_aprobacion_tecnica: editConv.min_puntaje_tecnico ? Number(editConv.min_puntaje_tecnico) : 0,
       });
       cancelEditConv();
       await loadConvocatoriasOnly();
@@ -513,28 +530,124 @@ export default function AdminPage() {
             <span className="text-muted">Crear, editar y eliminar</span>
           </summary>
           <div className="accordion-content">
-          <form onSubmit={createConvocatoria} className="form-row inline" style={{ marginBottom: 12 }}>
-            <label>
-              <span>Nombre</span>
-              <input className="input" value={newConv.nombre} onChange={(e) => setNewConv((p) => ({ ...p, nombre: e.target.value }))} required />
-            </label>
+          <form onSubmit={createConvocatoria} className="stack" style={{ marginBottom: 12, padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+            <h4 style={{ marginBottom: '1rem' }}>Nueva Convocatoria</h4>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+              <label>
+                <span>Nombre *</span>
+                <input className="input" value={newConv.nombre} onChange={(e) => setNewConv((p) => ({ ...p, nombre: e.target.value }))} required />
+              </label>
+              
+              <label>
+                <span>Programa Académico</span>
+                <select className="input" value={newConv.programa_academico_id} onChange={(e) => setNewConv((p) => ({ ...p, programa_academico_id: e.target.value }))}>
+                  <option value="">Seleccionar programa</option>
+                  {programas.map(prog => <option key={prog.id} value={prog.id}>{prog.nombre_programa}</option>)}
+                </select>
+              </label>
+
+              <label>
+                <span>Cupos</span>
+                <input className="input" type="number" min="1" value={newConv.cupos} onChange={(e) => setNewConv((p) => ({ ...p, cupos: e.target.value }))} placeholder="Ej: 5" />
+              </label>
+
+              <label>
+                <span>Sede</span>
+                <input className="input" value={newConv.sede} onChange={(e) => setNewConv((p) => ({ ...p, sede: e.target.value }))} placeholder="Ej: Mocoa, Valle del Guamuez" />
+              </label>
+
+              <label>
+                <span>Dedicación</span>
+                <select className="input" value={newConv.dedicacion} onChange={(e) => setNewConv((p) => ({ ...p, dedicacion: e.target.value }))}>
+                  <option value="">Seleccionar</option>
+                  <option value="Tiempo completo">Tiempo completo</option>
+                  <option value="Medio tiempo">Medio tiempo</option>
+                  <option value="Cátedra">Cátedra</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Tipo de Vinculación</span>
+                <select className="input" value={newConv.tipo_vinculacion} onChange={(e) => setNewConv((p) => ({ ...p, tipo_vinculacion: e.target.value }))}>
+                  <option value="">Seleccionar</option>
+                  <option value="Laboral">Laboral</option>
+                  <option value="Prestación de servicios">Prestación de servicios</option>
+                  <option value="Honorarios">Honorarios</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Apertura *</span>
+                <input className="input" type="datetime-local" value={newConv.apertura} onChange={(e) => setNewConv((p) => ({ ...p, apertura: e.target.value }))} required />
+              </label>
+
+              <label>
+                <span>Cierre *</span>
+                <input className="input" type="datetime-local" value={newConv.cierre} onChange={(e) => setNewConv((p) => ({ ...p, cierre: e.target.value }))} required />
+              </label>
+
+              <label>
+                <span>Puntaje Mín. Documental</span>
+                <input className="input" type="number" step="0.1" min="0" value={newConv.min_puntaje_documental} onChange={(e) => setNewConv((p) => ({ ...p, min_puntaje_documental: e.target.value }))} />
+              </label>
+
+              <label>
+                <span>Puntaje Mín. Técnico</span>
+                <input className="input" type="number" step="0.1" min="0" value={newConv.min_puntaje_tecnico} onChange={(e) => setNewConv((p) => ({ ...p, min_puntaje_tecnico: e.target.value }))} />
+              </label>
+            </div>
+
             <label>
               <span>Descripción</span>
-              <input className="input" value={newConv.descripcion} onChange={(e) => setNewConv((p) => ({ ...p, descripcion: e.target.value }))} placeholder="(opcional)" />
+              <textarea className="input" value={newConv.descripcion} onChange={(e) => setNewConv((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción de la convocatoria (opcional)" rows={3} />
             </label>
-            <label>
-              <span>Apertura</span>
-              <input className="input" type="datetime-local" value={newConv.apertura} onChange={(e) => setNewConv((p) => ({ ...p, apertura: e.target.value }))} required />
-            </label>
-            <label>
-              <span>Cierre</span>
-              <input className="input" type="datetime-local" value={newConv.cierre} onChange={(e) => setNewConv((p) => ({ ...p, cierre: e.target.value }))} required />
-            </label>
-            <div>
-              <div className="text-muted">Estado (automático)</div>
-              <div><span className={`badge ${calcularEstado(newConv.apertura, newConv.cierre) === 'vigente' ? 'success' : calcularEstado(newConv.apertura, newConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>{calcularEstado(newConv.apertura, newConv.cierre)}</span></div>
+
+            <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+              <legend style={{ fontSize: '0.875rem', fontWeight: 600, padding: '0 0.5rem' }}>Requisitos Documentales que el Postulante Debe Subir</legend>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                {['Hoja de vida', 'Cédula', 'Diplomas', 'Certificados laborales', 'Certificado de estudios', 'Referencias'].map(doc => (
+                  <label key={doc} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={newConv.requisitos_documentales.split(',').map(r => r.trim()).includes(doc)}
+                      onChange={(e) => {
+                        const current = newConv.requisitos_documentales.split(',').map(r => r.trim()).filter(Boolean);
+                        if (e.target.checked) {
+                          setNewConv(p => ({ ...p, requisitos_documentales: [...current, doc].join(', ') }));
+                        } else {
+                          setNewConv(p => ({ ...p, requisitos_documentales: current.filter(r => r !== doc).join(', ') }));
+                        }
+                      }}
+                    />
+                    <span style={{ fontSize: '0.875rem' }}>{doc}</span>
+                  </label>
+                ))}
+              </div>
+              <label>
+                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Otros requisitos (separados por comas):</span>
+                <input 
+                  className="input" 
+                  value={newConv.requisitos_documentales.split(',').map(r => r.trim()).filter(r => !['Hoja de vida', 'Cédula', 'Diplomas', 'Certificados laborales', 'Certificado de estudios', 'Referencias'].includes(r)).join(', ')} 
+                  onChange={(e) => {
+                    const predefined = ['Hoja de vida', 'Cédula', 'Diplomas', 'Certificados laborales', 'Certificado de estudios', 'Referencias'];
+                    const current = newConv.requisitos_documentales.split(',').map(r => r.trim()).filter(r => predefined.includes(r));
+                    const others = e.target.value.split(',').map(r => r.trim()).filter(Boolean);
+                    setNewConv(p => ({ ...p, requisitos_documentales: [...current, ...others].join(', ') }));
+                  }} 
+                  placeholder="Ej: Carta de intención, Portafolio" 
+                />
+              </label>
+            </fieldset>
+
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <span className="text-muted">Estado:</span>
+              <span className={`badge ${calcularEstado(newConv.apertura, newConv.cierre) === 'vigente' ? 'success' : calcularEstado(newConv.apertura, newConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>
+                {calcularEstado(newConv.apertura, newConv.cierre)}
+              </span>
             </div>
-            <button className="btn btn-primary" type="submit" disabled={loading}>Crear</button>
+
+            <button className="btn btn-primary" type="submit" disabled={loading}>Crear Convocatoria</button>
           </form>
 
           <div style={{ overflowX: 'auto' }}>
@@ -543,7 +656,9 @@ export default function AdminPage() {
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Descripción</th>
+                  <th>Programa</th>
+                  <th>Cupos</th>
+                  <th>Sede</th>
                   <th>Apertura</th>
                   <th>Cierre</th>
                   <th>Estado</th>
@@ -554,40 +669,16 @@ export default function AdminPage() {
                 {convocatorias.map((c) => (
                   <tr key={c.id}>
                     <td>{c.id}</td>
+                    <td>{c.nombre}</td>
+                    <td>{c.programa_academico_id ? programas.find(p => p.id === c.programa_academico_id)?.nombre_programa ?? '—' : '—'}</td>
+                    <td>{c.cupos ?? '—'}</td>
+                    <td>{c.sede ?? '—'}</td>
+                    <td>{new Date(c.fecha_apertura as any).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                    <td>{new Date(c.fecha_cierre as any).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
                     <td>
-                        {editingConvId === c.id ? (
-                          <input className="input" value={editConv.nombre} onChange={(e) => setEditConv((p) => ({ ...p, nombre: e.target.value }))} />
-                        ) : (
-                          c.nombre
-                        )}
-                    </td>
-                      <td>
-                        {editingConvId === c.id ? (
-                          <input className="input" value={editConv.descripcion} onChange={(e) => setEditConv((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción (opcional)" />
-                        ) : (
-                          c.descripcion ?? '—'
-                        )}
-                      </td>
-                    <td>
-                      {editingConvId === c.id ? (
-                        <input className="input" type="datetime-local" value={editConv.apertura} onChange={(e) => setEditConv((p) => ({ ...p, apertura: e.target.value }))} />
-                      ) : (
-                        new Date(c.fecha_apertura as any).toLocaleString()
-                      )}
-                    </td>
-                    <td>
-                      {editingConvId === c.id ? (
-                        <input className="input" type="datetime-local" value={editConv.cierre} onChange={(e) => setEditConv((p) => ({ ...p, cierre: e.target.value }))} />
-                      ) : (
-                        new Date(c.fecha_cierre as any).toLocaleString()
-                      )}
-                    </td>
-                    <td>
-                        {editingConvId === c.id ? (
-                          <span className={`badge ${calcularEstado(editConv.apertura, editConv.cierre) === 'vigente' ? 'success' : calcularEstado(editConv.apertura, editConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>{calcularEstado(editConv.apertura, editConv.cierre)}</span>
-                        ) : (
-                          <span className={`badge ${c.estado === 'vigente' ? 'success' : c.estado === 'borrador' ? 'muted' : 'warning'}`}>{c.estado}</span>
-                        )}
+                      <span className={`badge ${c.estado === 'vigente' || c.estado === 'publicada' ? 'success' : c.estado === 'borrador' ? 'muted' : 'warning'}`}>
+                        {c.estado}
+                      </span>
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {editingConvId === c.id ? (
@@ -618,7 +709,7 @@ export default function AdminPage() {
                 ))}
                 {convocatorias.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="empty-hint">Aún no hay convocatorias</td>
+                    <td colSpan={9} className="empty-hint">Aún no hay convocatorias</td>
                   </tr>
                 )}
               </tbody>
@@ -997,6 +1088,137 @@ export default function AdminPage() {
       )}
 
         {loading && <div className="section-card" style={{ marginTop: 8 }}>Procesando...</div>}
+        
+        {/* Modal de edición de convocatoria */}
+        {editingConvId !== null && (
+          <div className="modal-backdrop" onClick={cancelEditConv}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Editar Convocatoria</h3>
+                <button className="btn-close" onClick={cancelEditConv}>×</button>
+              </div>
+              <div className="modal-body stack">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                  <label>
+                    <span>Nombre *</span>
+                    <input className="input" value={editConv.nombre} onChange={(e) => setEditConv((p) => ({ ...p, nombre: e.target.value }))} required />
+                  </label>
+                  
+                  <label>
+                    <span>Programa Académico</span>
+                    <select className="input" value={editConv.programa_academico_id} onChange={(e) => setEditConv((p) => ({ ...p, programa_academico_id: e.target.value }))}>
+                      <option value="">Seleccionar programa</option>
+                      {programas.map(prog => <option key={prog.id} value={prog.id}>{prog.nombre_programa}</option>)}
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Cupos</span>
+                    <input className="input" type="number" min="1" value={editConv.cupos} onChange={(e) => setEditConv((p) => ({ ...p, cupos: e.target.value }))} />
+                  </label>
+
+                  <label>
+                    <span>Sede</span>
+                    <input className="input" value={editConv.sede} onChange={(e) => setEditConv((p) => ({ ...p, sede: e.target.value }))} placeholder="Ej: Mocoa, Valle del Guamuez" />
+                  </label>
+
+                  <label>
+                    <span>Dedicación</span>
+                    <select className="input" value={editConv.dedicacion} onChange={(e) => setEditConv((p) => ({ ...p, dedicacion: e.target.value }))}>
+                      <option value="">Seleccionar</option>
+                      <option value="Tiempo completo">Tiempo completo</option>
+                      <option value="Medio tiempo">Medio tiempo</option>
+                      <option value="Cátedra">Cátedra</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Tipo de Vinculación</span>
+                    <select className="input" value={editConv.tipo_vinculacion} onChange={(e) => setEditConv((p) => ({ ...p, tipo_vinculacion: e.target.value }))}>
+                      <option value="">Seleccionar</option>
+                      <option value="Laboral">Laboral</option>
+                      <option value="Prestación de servicios">Prestación de servicios</option>
+                      <option value="Honorarios">Honorarios</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Apertura *</span>
+                    <input className="input" type="datetime-local" value={editConv.apertura} onChange={(e) => setEditConv((p) => ({ ...p, apertura: e.target.value }))} required />
+                  </label>
+
+                  <label>
+                    <span>Cierre *</span>
+                    <input className="input" type="datetime-local" value={editConv.cierre} onChange={(e) => setEditConv((p) => ({ ...p, cierre: e.target.value }))} required />
+                  </label>
+
+                  <label>
+                    <span>Puntaje Mín. Documental</span>
+                    <input className="input" type="number" step="0.1" min="0" value={editConv.min_puntaje_documental} onChange={(e) => setEditConv((p) => ({ ...p, min_puntaje_documental: e.target.value }))} />
+                  </label>
+
+                  <label>
+                    <span>Puntaje Mín. Técnico</span>
+                    <input className="input" type="number" step="0.1" min="0" value={editConv.min_puntaje_tecnico} onChange={(e) => setEditConv((p) => ({ ...p, min_puntaje_tecnico: e.target.value }))} />
+                  </label>
+                </div>
+
+                <label>
+                  <span>Descripción</span>
+                  <textarea className="input" value={editConv.descripcion} onChange={(e) => setEditConv((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción de la convocatoria (opcional)" rows={3} />
+                </label>
+
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+                  <legend style={{ fontSize: '0.875rem', fontWeight: 600, padding: '0 0.5rem' }}>Requisitos Documentales que el Postulante Debe Subir</legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    {['Hoja de vida', 'Cédula', 'Diplomas', 'Certificados laborales', 'Certificado de estudios', 'Referencias'].map(doc => (
+                      <label key={doc} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={editConv.requisitos_documentales.split(',').map(r => r.trim()).includes(doc)}
+                          onChange={(e) => {
+                            const current = editConv.requisitos_documentales.split(',').map(r => r.trim()).filter(Boolean);
+                            if (e.target.checked) {
+                              setEditConv(p => ({ ...p, requisitos_documentales: [...current, doc].join(', ') }));
+                            } else {
+                              setEditConv(p => ({ ...p, requisitos_documentales: current.filter(r => r !== doc).join(', ') }));
+                            }
+                          }}
+                        />
+                        <span style={{ fontSize: '0.875rem' }}>{doc}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <label>
+                    <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Otros requisitos (separados por comas):</span>
+                    <input 
+                      className="input" 
+                      value={editConv.requisitos_documentales.split(',').map(r => r.trim()).filter(r => !['Hoja de vida', 'Cédula', 'Diplomas', 'Certificados laborales', 'Certificado de estudios', 'Referencias'].includes(r)).join(', ')} 
+                      onChange={(e) => {
+                        const predefined = ['Hoja de vida', 'Cédula', 'Diplomas', 'Certificados laborales', 'Certificado de estudios', 'Referencias'];
+                        const current = editConv.requisitos_documentales.split(',').map(r => r.trim()).filter(r => predefined.includes(r));
+                        const others = e.target.value.split(',').map(r => r.trim()).filter(Boolean);
+                        setEditConv(p => ({ ...p, requisitos_documentales: [...current, ...others].join(', ') }));
+                      }} 
+                      placeholder="Ej: Carta de intención, Portafolio" 
+                    />
+                  </label>
+                </fieldset>
+
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <span className="text-muted">Estado:</span>
+                  <span className={`badge ${calcularEstado(editConv.apertura, editConv.cierre) === 'vigente' ? 'success' : calcularEstado(editConv.apertura, editConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>
+                    {calcularEstado(editConv.apertura, editConv.cierre)}
+                  </span>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn" onClick={cancelEditConv}>Cancelar</button>
+                <button className="btn btn-primary" onClick={saveEditConv} disabled={loading}>Guardar Cambios</button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>

@@ -15,6 +15,7 @@ import MisEvaluaciones from './pages/MisEvaluaciones';
 import ConvocatoriasPage from './pages/ConvocatoriasPage';
 import './styles/theme.css';
 import { ToastProvider } from './context/ToastContext';
+import { getRoleNames } from './utils/roleHelpers';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, user, loading } = useAuth();
@@ -26,9 +27,9 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
     return <Navigate to={`/?auth=login&next=${next}`} replace />;
   }
   if (roles && roles.length > 0) {
-    const names = (user?.roles || []).map((r: any) => String(r?.nombre_rol ?? r).toLowerCase());
-    const target = roles.map((r) => r.toLowerCase());
-    const allowed = target.some((r) => names.includes(r));
+    const userRoles = getRoleNames(user);
+    const targetRoles = roles.map((r) => r.toLowerCase());
+    const allowed = targetRoles.some((r) => userRoles.includes(r));
     if (!allowed) {
       const next = encodeURIComponent(location.pathname + (location.search || ''));
       return <Navigate to={`/403?from=${next}`} replace />;

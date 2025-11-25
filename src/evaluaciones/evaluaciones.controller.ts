@@ -4,7 +4,7 @@ import { EvaluacionesService } from './evaluaciones.service';
 import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateEvaluacionDto } from './dto/update-evaluacion.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../common/roles.guard';
+import { JwtRolesGuard } from '../common/jwt-roles.guard';
 import { Roles } from '../common/roles.decorator';
 import { AsignacionesService } from '../asignaciones/asignaciones.service';
 
@@ -17,7 +17,7 @@ export class EvaluacionesController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin','evaluador')
   async create(@Body() createEvaluacionDto: CreateEvaluacionDto, @Req() req: any) {
     try {
@@ -40,7 +40,7 @@ export class EvaluacionesController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin','evaluador')
   async findAll(@Req() req: any) {
     try {
@@ -57,7 +57,7 @@ export class EvaluacionesController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin','evaluador')
   async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     try {
@@ -78,7 +78,7 @@ export class EvaluacionesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin','evaluador')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -106,7 +106,7 @@ export class EvaluacionesController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtRolesGuard)
   @Roles('admin','evaluador')
   async remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     try {

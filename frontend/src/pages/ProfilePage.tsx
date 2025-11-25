@@ -4,24 +4,22 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { getEffectiveRole, hasRole } from '../utils/roleHelpers';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const initials = `${user?.nombre?.[0] || ''}${user?.apellido?.[0] || ''}`.toUpperCase();
-  const roles = (user?.roles || []).map((r: any) => r.nombre_rol);
-  const roleNames = (user?.roles || []).map((r: any) => String(r?.nombre_rol ?? r).toLowerCase());
-  const isAdmin = roleNames.includes('admin');
-  const isPostulante = roleNames.includes('postulante');
-  const isEvaluador = isAdmin || roleNames.includes('evaluador');
-  // Rol efectivo (modelo de un solo rol por usuario). Si viniera más de uno desde backend, usamos un desempate simple.
-  const effectiveRole: 'admin' | 'evaluador' | 'postulante' | 'none' =
-    isAdmin ? 'admin' : (roleNames.includes('evaluador') ? 'evaluador' : (roleNames.includes('postulante') ? 'postulante' : 'none'));
+  const roles = (user?.roles || []).map((r: any) => r?.nombre_rol || r);
+  const isAdmin = hasRole(user, 'admin');
+  const isPostulante = hasRole(user, 'postulante');
+  const isEvaluador = hasRole(user, 'evaluador') || isAdmin;
+  const effectiveRole = getEffectiveRole(user);
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<'datos' | 'password'>('datos');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
-  const [form, setForm] = useState({ nombre: user?.nombre || '', apellido: user?.apellido || '', email: user?.email || '', identificacion: user?.identificacion || '' });
+  const [form, setForm] = useState({ nombre: user?.nombre || '', apellido: user?.apellido || '', email: user?.email || '', identificacion: user?.identificacion || '', telefono: (user as any)?.telefono || '' });
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const { updateProfile, changePassword } = useAuth();
   const [counts, setCounts] = useState<{ postulaciones?: number | null; evaluaciones?: number | null }>({});
@@ -106,16 +104,25 @@ export default function ProfilePage() {
               <div>{user?.identificacion || '—'}</div>
             </div>
             <div>
+              <div className="muted">Teléfono</div>
+              <div>{(user as any)?.telefono || '—'}</div>
+            </div>
+            <div>
               <div className="muted">Roles</div>
               <div className="chips">
                 {roles.length > 0 ? roles.map((r: string) => (
-                  <span key={r} className={`chip ${r === 'admin' ? 'badge-admin' : ''}`}>{r}</span>
+                  <span key={r} className={`chip ${r === 'ADMIN' ? 'badge-admin' : ''}`}>{r}</span>
                 )) : <span className="muted">N/A</span>}
               </div>
             </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-            <button className="btn" onClick={() => setEditing(true)}>Editar perfil</button>
+            <div>
+              <div className="muted">Estado</div>
+              <div>
+                <span className={`chip ${(user as any)?.verificado ? 'badge-success' : 'badge-warning'}`}>
+                  {(user as any)?.verificado ? 'Verificado' : 'Pendiente verificación'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -129,13 +136,15 @@ export default function ProfilePage() {
             {effectiveRole === 'none' && (
               <div className="text-muted">Tu cuenta aún no tiene roles asociados. Contacta al administrador.</div>
             )}
-            {/* Acción de editar perfil siempre disponible */}
-            <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>Editar perfil</div>
-                <div className="text-muted">Actualiza tu información personal.</div>
-              </div>
-              <button className="btn" onClick={() => setEditing(true)}>Abrir</button>
+            {/* Botón de editar perfil */}
+            <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+              <button className="btn btn-primary" onClick={() => setEditing(true)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 6 }}>
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Editar mi perfil
+              </button>
             </div>
           </div>
         </div>
@@ -176,6 +185,12 @@ export default function ProfilePage() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M7 8h10" stroke="currentColor" strokeWidth="1.5"/></svg>
                 </span>
                 <input className="input" placeholder="Identificación" value={form.identificacion} onChange={(e)=> setForm({...form, identificacion: e.target.value})} />
+              </div>
+              <div className="input-group">
+                <span className="input-icon" aria-hidden>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="1.5"/></svg>
+                </span>
+                <input className="input" placeholder="Teléfono (opcional)" value={(form as any).telefono || ''} onChange={(e)=> setForm({...form, telefono: e.target.value} as any)} />
               </div>
               {error && <div className="text-danger">{error}</div>}
               {ok && <div className="text-success">{ok}</div>}
