@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsNumber } from 'class-validator';
 
 export class UpdatePostulacionDto {
   @IsOptional()
@@ -8,4 +8,8 @@ export class UpdatePostulacionDto {
   @IsOptional()
   @IsString()
   disponibilidad_horaria?: string;
+
+  @IsOptional()
+  @IsNumber()
+  programa_id?: number | null;
 }

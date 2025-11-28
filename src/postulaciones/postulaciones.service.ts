@@ -45,7 +45,10 @@ export class PostulacionesService {
   }
 
   async findOne(id: number): Promise<Postulacion | null> {
-    return this.postulacionRepository.findOneBy({ id });
+    return this.postulacionRepository.findOne({ 
+      where: { id },
+      relations: ['postulante', 'convocatoria', 'convocatoria.programa', 'programa']
+    });
   }
 
   async update(id: number, updatePostulacionDto: any): Promise<Postulacion | null> {
@@ -71,12 +74,13 @@ export class PostulacionesService {
   }
 
   async submit(id: number, postulanteId: number): Promise<Postulacion> {
-    const current = await this.postulacionRepository.findOne({ where: { id }, relations: ['postulante', 'programa'] });
+    const current = await this.postulacionRepository.findOne({ where: { id } });
     if (!current) throw new Error('Postulación no encontrada');
-    if (!current.postulante || current.postulante.id !== postulanteId) throw new Error('No autorizado');
-    if (!current.programa) throw new Error('Debes seleccionar un programa antes de enviar');
-    current.estado = 'enviado';
-    current.fechaPostulacion = new Date();
+    if (current.postulante_id !== postulanteId) throw new Error('No autorizado para enviar esta postulación');
+    if (current.estado !== 'borrador') throw new Error('Solo se pueden enviar postulaciones en borrador');
+    if (!current.programa_id) throw new Error('Debes seleccionar un programa académico antes de enviar');
+    current.estado = 'enviada';
+    current.submitted_at = new Date();
     await this.postulacionRepository.save(current);
     return current;
   }

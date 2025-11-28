@@ -18,6 +18,16 @@ export class Postulacion {
   @PrimaryGeneratedColumn()
   id: number;
 
+  // 🔹 IDs explícitos para acceso directo
+  @Column({ name: 'postulante_id' })
+  postulante_id: number;
+
+  @Column({ name: 'convocatoria_id' })
+  convocatoria_id: number;
+
+  @Column({ name: 'programa_id', nullable: true })
+  programa_id: number | null;
+
   // 🔹 Relaciones reales
   @ManyToOne(() => User)
   @JoinColumn({ name: 'postulante_id' })

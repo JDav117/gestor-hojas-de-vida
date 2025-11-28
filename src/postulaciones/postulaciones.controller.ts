@@ -61,7 +61,7 @@ export class PostulacionesController {
       : [];
     const isAdmin = roles.includes('admin');
     const isEvaluador = roles.includes('evaluador');
-    if (postulacion.postulante.id === user.userId) return postulacion;
+    if (postulacion.postulante_id === user.userId) return postulacion;
     if (isAdmin) return postulacion;
     if (isEvaluador) {
       const assigned = await this.asignacionesService.isAssigned(user.userId, postulacion.id);
@@ -102,7 +102,7 @@ async submit(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     if (!postulacion) throw new ForbiddenException('Postulación no encontrada');
     const user = req.user;
     const isAdmin = user.roles && (user.roles.includes('admin') || user.roles.some((r: any) => r.nombre_rol === 'admin'));
-    if (postulacion.postulante.id !== user.userId && !isAdmin) {
+    if (postulacion.postulante_id !== user.userId && !isAdmin) {
       throw new ForbiddenException('No tienes permiso para modificar esta postulación');
     }
     return this.postulacionesService.update(id, updatePostulacionDto);
@@ -114,7 +114,7 @@ async submit(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     if (!postulacion) throw new ForbiddenException('Postulación no encontrada');
     const user = req.user;
     const isAdmin = user.roles && (user.roles.includes('admin') || user.roles.some((r: any) => r.nombre_rol === 'admin'));
-    if (postulacion.postulante.id !== user.userId && !isAdmin) {
+    if (postulacion.postulante_id !== user.userId && !isAdmin) {
       throw new ForbiddenException('No tienes permiso para eliminar esta postulación');
     }
     return this.postulacionesService.remove(id);
