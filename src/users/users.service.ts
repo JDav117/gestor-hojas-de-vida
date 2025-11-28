@@ -5,6 +5,7 @@ import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '../roles/role.entity';
+import { StorageService } from '../common/storage/storage.service';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    private storageService: StorageService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -83,5 +85,26 @@ export class UsersService {
     const hashed = await bcrypt.hash(newPassword, 10);
     user.password_hash = hashed;
     await this.usersRepository.save(user);
+  }
+
+  async updateProfilePhoto(id: number, file: Express.Multer.File): Promise<string> {
+    const user = await this.findOne(id);
+    if (!user) throw new BadRequestException('User not found');
+
+    // Eliminar foto anterior si existe
+    if (user.foto_perfil) {
+      this.storageService.deleteProfilePhoto(user.foto_perfil);
+    }
+
+    // Guardar nueva foto
+    const fotoPath = await this.storageService.saveProfilePhoto(file, id);
+    user.foto_perfil = fotoPath;
+    await this.usersRepository.save(user);
+
+    return fotoPath;
+  }
+
+  getProfilePhoto(id: number): Promise<string | null> {
+    return this.usersRepository.findOne({ where: { id } }).then((user) => user?.foto_perfil || null);
   }
 }

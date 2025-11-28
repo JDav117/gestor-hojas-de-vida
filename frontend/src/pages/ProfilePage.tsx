@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -23,6 +23,9 @@ export default function ProfilePage() {
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const { updateProfile, changePassword } = useAuth();
   const [counts, setCounts] = useState<{ postulaciones?: number | null; evaluaciones?: number | null }>({});
+  const [fotoPreview, setFotoPreview] = useState<string | null>((user as any)?.foto_perfil ? `http://localhost:3000/${(user as any).foto_perfil}` : null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
   // Blocks for Drawer (defined once to reuse in prioritized rendering)
   const PostulacionesBlock = (
     <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -86,13 +89,78 @@ export default function ProfilePage() {
     load();
     return () => { cancelled = true; };
   }, [isAdmin, isEvaluador]);
+
+  const handleFotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFotoPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFotoUpload = async () => {
+    if (!fileInputRef.current?.files?.[0]) return;
+    
+    setUploadingFoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('foto', fileInputRef.current.files[0]);
+      
+      const res = await api.post('/users/me/foto', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      setFotoPreview(`http://localhost:3000/${res.data.foto_perfil}`);
+      setOk('Foto actualizada correctamente');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Error al subir la foto');
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
   return (
     <div className="container-center" style={{ flexDirection: 'column' }}>
       <Header />
       <main style={{ flex: 1, display: 'grid', placeItems: 'start center', padding: 20 }}>
         <div className="card" style={{ width: '100%', maxWidth: 720 }}>
           <div className="card-header">
-            <div className="avatar">{initials || 'U'}</div>
+            <div 
+              style={{
+                position: 'relative',
+                cursor: 'pointer',
+                width: 60,
+                height: 60,
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              title="Click para cambiar foto"
+            >
+              {fotoPreview ? (
+                <img 
+                  src={fotoPreview} 
+                  alt="Foto perfil"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div className="avatar">{initials || 'U'}</div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFotoSelect}
+              />
+            </div>
             <div>
               <h2 style={{ margin: 0 }}>{user?.nombre} {user?.apellido}</h2>
               <div className="muted">{user?.email}</div>
@@ -124,6 +192,27 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+          {fotoPreview && fileInputRef.current?.files?.[0] && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center' }}>
+              <button 
+                className="btn"
+                onClick={() => {
+                  setFotoPreview(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                disabled={uploadingFoto}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleFotoUpload}
+                disabled={uploadingFoto}
+              >
+                {uploadingFoto ? <span className="spinner"/> : 'Guardar foto'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Accesos rápidos según rol integrados en la página */}

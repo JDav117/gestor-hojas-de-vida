@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Req, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -76,5 +77,16 @@ export class UsersController {
     const updated = await this.usersService.updateProfile(Number(userId), body);
     const { password_hash, ...safe } = updated as any;
     return safe;
+  }
+
+  // Subir foto de perfil
+  @Post('me/foto')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('foto'))
+  async uploadProfilePhoto(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
+    const userId = req.user?.userId;
+    if (!userId) return { statusCode: 401, message: 'Unauthorized' };
+    const fotoPath = await this.usersService.updateProfilePhoto(Number(userId), file);
+    return { message: 'Foto actualizada', foto_perfil: fotoPath };
   }
 }
