@@ -23,6 +23,7 @@ export class User {
   identificacion: string;
 
   @Column({ nullable: true }) telefono: string;
+  @Column({ nullable: true }) foto_perfil: string;
   @Column({ default: false }) verificado: boolean;
   @CreateDateColumn() created_at: Date;
   @UpdateDateColumn() updated_at: Date;
