@@ -150,9 +150,10 @@ export default function ConvocatoriasPage() {
             
             <select className="input" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
               <option value="">Todos los estados</option>
-              <option value="vigente">Vigente</option>
+              <option value="publicada">Publicada</option>
               <option value="cerrada">Cerrada</option>
               <option value="borrador">Borrador</option>
+              <option value="anulada">Anulada</option>
             </select>
           </div>
           
@@ -174,7 +175,7 @@ export default function ConvocatoriasPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', gap: 20 }}>
           {filtered.map((c) => {
-            const isVigente = c.estado === 'publicada' || c.estado === 'vigente';
+            const isVigente = c.estado === 'publicada';
             const isCerrada = c.estado === 'cerrada';
             const requisitos = Array.isArray(c.requisitos_documentales) 
               ? c.requisitos_documentales 

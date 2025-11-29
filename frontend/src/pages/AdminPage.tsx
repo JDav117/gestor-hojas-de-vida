@@ -199,7 +199,7 @@ export default function AdminPage() {
     const now = Date.now();
     if (now < ap) return 'borrador';
     if (now > ci) return 'cerrada';
-    return 'vigente';
+    return 'publicada';
   };
 
   // Crear convocatoria
@@ -642,7 +642,7 @@ export default function AdminPage() {
 
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <span className="text-muted">Estado:</span>
-              <span className={`badge ${calcularEstado(newConv.apertura, newConv.cierre) === 'vigente' ? 'success' : calcularEstado(newConv.apertura, newConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>
+              <span className={`badge ${calcularEstado(newConv.apertura, newConv.cierre) === 'publicada' ? 'success' : calcularEstado(newConv.apertura, newConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>
                 {calcularEstado(newConv.apertura, newConv.cierre)}
               </span>
             </div>
@@ -676,7 +676,7 @@ export default function AdminPage() {
                     <td>{new Date(c.fecha_apertura as any).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
                     <td>{new Date(c.fecha_cierre as any).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
                     <td>
-                      <span className={`badge ${c.estado === 'vigente' || c.estado === 'publicada' ? 'success' : c.estado === 'borrador' ? 'muted' : 'warning'}`}>
+                      <span className={`badge ${c.estado === 'publicada' ? 'success' : c.estado === 'borrador' ? 'muted' : 'warning'}`}>
                         {c.estado}
                       </span>
                     </td>
@@ -988,7 +988,7 @@ export default function AdminPage() {
                         <td>#{convId}</td>
                         <td>{conv?.nombre ?? '—'}</td>
                         <td>{count}</td>
-                        <td><span className={`badge ${conv?.estado === 'vigente' ? 'success' : conv?.estado === 'borrador' ? 'muted' : 'warning'}`}>{conv?.estado ?? '—'}</span></td>
+                        <td><span className={`badge ${conv?.estado === 'publicada' ? 'success' : conv?.estado === 'borrador' ? 'muted' : 'warning'}`}>{conv?.estado ?? '—'}</span></td>
                         <td>{conv ? new Date(conv.fecha_apertura as any).toLocaleString() : '—'}</td>
                         <td>{conv ? new Date(conv.fecha_cierre as any).toLocaleString() : '—'}</td>
                         <td><button className="btn btn-sm" onClick={() => { setPostQuery(prev => ({ ...prev, convocatoria: Number(convId) })); }}>Ver detalles</button></td>
@@ -1207,7 +1207,7 @@ export default function AdminPage() {
 
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span className="text-muted">Estado:</span>
-                  <span className={`badge ${calcularEstado(editConv.apertura, editConv.cierre) === 'vigente' ? 'success' : calcularEstado(editConv.apertura, editConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>
+                  <span className={`badge ${calcularEstado(editConv.apertura, editConv.cierre) === 'publicada' ? 'success' : calcularEstado(editConv.apertura, editConv.cierre) === 'borrador' ? 'muted' : 'warning'}`}>
                     {calcularEstado(editConv.apertura, editConv.cierre)}
                   </span>
                 </div>
