@@ -18,7 +18,7 @@ export class ConvocatoriasService {
     if (Number.isNaN(ap) || Number.isNaN(ci)) return 'borrador';
     if (n < ap) return 'borrador';
     if (n > ci) return 'cerrada';
-    return 'vigente';
+    return 'publicada';
   }
 
   async create(createConvocatoriaDto: CreateConvocatoriaDto): Promise<Convocatoria> {
