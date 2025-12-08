@@ -39,7 +39,7 @@ export default function LoginForm({ onSuccess, title = 'Iniciar sesión', showTi
         <span className="input-icon" aria-hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="1.5"/></svg>
         </span>
-        <input className="input" placeholder="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input className="input" placeholder="Contraseña" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <a

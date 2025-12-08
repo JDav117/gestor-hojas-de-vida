@@ -1,4 +1,4 @@
-import { IsNumber, IsDate } from 'class-validator';
+import { IsNumber, IsDate, IsOptional, IsString, IsBoolean, IsObject } from 'class-validator';
 
 export class CreateEvaluacionDto {
   @IsNumber()
@@ -7,9 +7,22 @@ export class CreateEvaluacionDto {
   @IsNumber()
   evaluador_id: number;
 
+  @IsOptional()
   @IsDate()
-  fecha: Date;
+  fecha?: Date;
 
   @IsNumber()
   puntaje_total: number;
+
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+
+  @IsOptional()
+  @IsObject()
+  detalles_puntajes?: any;
+
+  @IsOptional()
+  @IsBoolean()
+  finalizada?: boolean;
 }

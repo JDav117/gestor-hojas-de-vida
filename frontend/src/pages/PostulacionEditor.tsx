@@ -50,6 +50,8 @@ export default function PostulacionEditor() {
   const [postulacion, setPostulacion] = useState<Postulacion | null>(null);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [programaId, setProgramaId] = useState<number | ''>('');
+  const [documentos, setDocumentos] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const isDraft = postulacion?.estado === 'borrador';
 
@@ -60,14 +62,16 @@ export default function PostulacionEditor() {
       setLoading(true);
       setError(null);
       try {
-        const [pRes, prRes] = await Promise.all([
+        const [pRes, prRes, docsRes] = await Promise.all([
           api.get<Postulacion>(`/postulaciones/${pid}`),
           api.get<Programa[]>(`/programas-academicos`),
+          api.get<any[]>(`/documentos/postulacion/${pid}`),
         ]);
         if (!mounted) return;
         setPostulacion(pRes.data);
         setProgramas(prRes.data);
         setProgramaId(pRes.data.programa_id ?? '');
+        setDocumentos(docsRes.data);
       } catch (e: any) {
         setError(e?.response?.data?.message || 'No se pudo cargar la postulación');
       } finally {
@@ -138,6 +142,60 @@ export default function PostulacionEditor() {
       setSaving(false);
     }
   }
+
+  async function handleFileUpload(file: File, nombreDocumento: string) {
+    if (!postulacion) return;
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('postulacion_id', String(postulacion.id));
+      formData.append('nombre_documento', nombreDocumento);
+      
+      await api.post('/documentos/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Recargar documentos
+      const { data } = await api.get(`/documentos/postulacion/${postulacion.id}`);
+      setDocumentos(data);
+      
+      show(`Documento "${nombreDocumento}" subido correctamente`, 'success');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message;
+      show(Array.isArray(msg) ? msg.join(', ') : (msg || 'Error al subir documento'), 'error');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleDeleteDocument(docId: number) {
+    if (!confirm('¿Estás seguro de eliminar este documento?')) return;
+    
+    try {
+      await api.delete(`/documentos/${docId}`);
+      
+      // Recargar documentos
+      const { data } = await api.get(`/documentos/postulacion/${postulacion!.id}`);
+      setDocumentos(data);
+      
+      show('Documento eliminado', 'success');
+    } catch (e: any) {
+      show(e?.response?.data?.message || 'Error al eliminar', 'error');
+    }
+  }
+
+  const requisitosDocumentales = useMemo(() => {
+    if (!postulacion?.convocatoria?.requisitos_documentales) return [];
+    const req = postulacion.convocatoria.requisitos_documentales;
+    if (Array.isArray(req)) return req;
+    return [];
+  }, [postulacion]);
+
+  const getDocumentoForRequisito = (requisito: string) => {
+    return documentos.find(d => d.nombre_documento === requisito);
+  };
 
   return (
     <div className="container-center" style={{ flexDirection: 'column' }}>
@@ -399,6 +457,188 @@ export default function PostulacionEditor() {
                 </div>
               )}
 
+              {/* Sección de carga de documentos */}
+              {requisitosDocumentales.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <h4 style={{ 
+                    fontSize: '0.9375rem', 
+                    fontWeight: 600, 
+                    marginBottom: 12,
+                    color: '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    <Icon name="upload_file" size="md" style={{ color: '#3b82f6' }} />
+                    Documentos requeridos
+                  </h4>
+                  
+                  {requisitosDocumentales.map((requisito, idx) => {
+                    const docExistente = getDocumentoForRequisito(requisito);
+                    
+                    return (
+                      <div 
+                        key={idx}
+                        style={{ 
+                          padding: 12,
+                          background: '#f8fafc',
+                          borderRadius: 8,
+                          marginBottom: 12,
+                          border: docExistente ? '2px solid #10b981' : '2px solid #e2e8f0'
+                        }}
+                      >
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          marginBottom: 8
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ 
+                              fontSize: '0.875rem', 
+                              fontWeight: 600,
+                              color: '#1e293b',
+                              marginBottom: 4
+                            }}>
+                              {idx + 1}. {requisito}
+                            </div>
+                            {docExistente && (
+                              <div style={{ 
+                                fontSize: '0.8125rem', 
+                                color: '#10b981',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}>
+                                <Icon name="check_circle" size="sm" style={{ color: '#10b981' }} />
+                                <strong>Archivo:</strong> {docExistente.nombre_archivo}
+                                <span style={{ color: '#64748b' }}>
+                                  ({new Date(docExistente.fecha_carga).toLocaleDateString('es-CO')})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            {docExistente ? (
+                              <>
+                                <a
+                                  href={`${import.meta.env.VITE_API_URL}${docExistente.url_archivo}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    padding: '6px 12px',
+                                    fontSize: '0.8125rem',
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    borderRadius: 6,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4
+                                  }}
+                                >
+                                  <Icon name="visibility" size="sm" />
+                                  Ver
+                                </a>
+                                {canEdit && (
+                                  <button
+                                    onClick={() => handleDeleteDocument(docExistente.id)}
+                                    style={{
+                                      padding: '6px 12px',
+                                      fontSize: '0.8125rem',
+                                      background: '#ef4444',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: 6,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 4
+                                    }}
+                                  >
+                                    <Icon name="delete" size="sm" />
+                                    Eliminar
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              canEdit && (
+                                <label style={{ position: 'relative' }}>
+                                  <input
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    disabled={uploading || saving}
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        handleFileUpload(file, requisito);
+                                        e.target.value = ''; // Reset input
+                                      }
+                                    }}
+                                    style={{ display: 'none' }}
+                                  />
+                                  <span
+                                    style={{
+                                      padding: '6px 12px',
+                                      fontSize: '0.8125rem',
+                                      background: '#10b981',
+                                      color: 'white',
+                                      borderRadius: 6,
+                                      cursor: uploading || saving ? 'not-allowed' : 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 4,
+                                      opacity: uploading || saving ? 0.6 : 1
+                                    }}
+                                  >
+                                    <Icon name={uploading ? "hourglass_empty" : "upload"} size="sm" />
+                                    {uploading ? 'Subiendo...' : 'Subir'}
+                                  </span>
+                                </label>
+                              )
+                            )}
+                          </div>
+                        </div>
+                        
+                        {!docExistente && isDraft && (
+                          <div style={{ 
+                            fontSize: '0.75rem', 
+                            color: '#64748b',
+                            marginTop: 4
+                          }}>
+                            Formatos permitidos: PDF, JPG, PNG (máx. 5 MB)
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Contador de documentos */}
+                  <div style={{ 
+                    padding: 8,
+                    background: documentos.length === requisitosDocumentales.length ? '#f0fdf4' : '#fef3c7',
+                    borderRadius: 6,
+                    fontSize: '0.8125rem',
+                    color: documentos.length === requisitosDocumentales.length ? '#166534' : '#92400e',
+                    textAlign: 'center',
+                    fontWeight: 600
+                  }}>
+                    {documentos.length === requisitosDocumentales.length ? (
+                      <>
+                        <Icon name="check_circle" size="sm" style={{ marginRight: 4, color: '#10b981' }} />
+                        Todos los documentos han sido cargados ({documentos.length}/{requisitosDocumentales.length})
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="warning" size="sm" style={{ marginRight: 4, color: '#f59e0b' }} />
+                        Documentos cargados: {documentos.length} de {requisitosDocumentales.length}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Observaciones */}
               {postulacion.observaciones && (
                 <div style={{ 
@@ -433,9 +673,20 @@ export default function PostulacionEditor() {
                     </button>
                     <button 
                       className="btn btn-primary" 
-                      disabled={saving || !programaId} 
+                      disabled={
+                        saving || 
+                        !programaId || 
+                        (requisitosDocumentales.length > 0 && documentos.length < requisitosDocumentales.length)
+                      } 
                       onClick={handleEnviar}
                       style={{ minWidth: 120, fontWeight: 600 }}
+                      title={
+                        !programaId 
+                          ? 'Debes seleccionar un programa' 
+                          : (requisitosDocumentales.length > 0 && documentos.length < requisitosDocumentales.length)
+                            ? 'Debes subir todos los documentos requeridos'
+                            : ''
+                      }
                     >
                       {saving ? (
                         <><Icon name="hourglass_empty" size="sm" style={{ marginRight: 4 }} /> Enviando...</>
@@ -459,6 +710,43 @@ export default function PostulacionEditor() {
                   </div>
                 )}
               </div>
+              
+              {/* Ayuda para validación de envío */}
+              {isDraft && canEdit && (
+                <div style={{ marginTop: 12 }}>
+                  {!programaId && (
+                    <div style={{ 
+                      padding: 8, 
+                      background: '#fef2f2', 
+                      borderRadius: 6,
+                      fontSize: '0.8125rem',
+                      color: '#dc2626',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}>
+                      <Icon name="error" size="sm" style={{ color: '#dc2626' }} />
+                      Debes seleccionar un programa académico
+                    </div>
+                  )}
+                  {requisitosDocumentales.length > 0 && documentos.length < requisitosDocumentales.length && (
+                    <div style={{ 
+                      padding: 8, 
+                      background: '#fef2f2', 
+                      borderRadius: 6,
+                      fontSize: '0.8125rem',
+                      color: '#dc2626',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      marginTop: 8
+                    }}>
+                      <Icon name="error" size="sm" style={{ color: '#dc2626' }} />
+                      Debes subir todos los documentos requeridos antes de enviar
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Ayuda para borrador */}
               {isDraft && (

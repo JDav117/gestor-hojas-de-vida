@@ -11,9 +11,18 @@ export class Evaluacion {
   @Column()
   evaluador_id: number;
 
-  @Column()
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   fecha: Date;
 
   @Column('float')
   puntaje_total: number;
+
+  @Column({ type: 'text', nullable: true })
+  observaciones: string;
+
+  @Column({ type: 'json', nullable: true })
+  detalles_puntajes: any;
+
+  @Column({ type: 'boolean', default: false })
+  finalizada: boolean;
 }

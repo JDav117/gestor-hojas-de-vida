@@ -32,6 +32,12 @@ export class DocumentosService {
     });
   }
 
+  async findByPostulacionId(postulacionId: number): Promise<Documento[]> {
+    return this.documentoRepository.find({
+      where: { postulacion_id: postulacionId },
+    });
+  }
+
   async update(
     id: number,
     updateDocumentoDto: UpdateDocumentoDto,

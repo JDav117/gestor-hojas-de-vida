@@ -52,8 +52,43 @@ export class PostulacionesService {
   }
 
   async update(id: number, updatePostulacionDto: any): Promise<Postulacion | null> {
+    // Validar transición de estado si se está cambiando el estado
+    if (updatePostulacionDto.estado) {
+      const current = await this.postulacionRepository.findOne({ where: { id } });
+      if (current) {
+        this.validateStateTransition(current.estado, updatePostulacionDto.estado);
+      }
+    }
+    
     await this.postulacionRepository.update(id, updatePostulacionDto);
     return this.findOne(id);
+  }
+
+  private validateStateTransition(currentState: string, newState: string): void {
+    // Definir transiciones válidas
+    const validTransitions: Record<string, string[]> = {
+      'borrador': ['presentada', 'enviada'],
+      'enviada': ['en_evaluacion', 'presentada'],
+      'presentada': ['en_evaluacion'],
+      'en_evaluacion': ['evaluada'],
+      'evaluada': ['aceptada', 'rechazada'],
+      'aceptada': [], // Estado final
+      'rechazada': [], // Estado final
+    };
+
+    // Si el estado no cambia, permitir
+    if (currentState === newState) {
+      return;
+    }
+
+    // Verificar si la transición es válida
+    const allowedStates = validTransitions[currentState] || [];
+    if (!allowedStates.includes(newState)) {
+      throw new Error(
+        `Transición de estado inválida: no se puede cambiar de '${currentState}' a '${newState}'. ` +
+        `Estados permitidos desde '${currentState}': ${allowedStates.length > 0 ? allowedStates.join(', ') : 'ninguno (estado final)'}`
+      );
+    }
   }
 
   async remove(id: number): Promise<void> {

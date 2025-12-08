@@ -42,4 +42,11 @@ async findByEvaluador(evaluadorId: number): Promise<Evaluacion[]> {
     where: { evaluador_id: evaluadorId },
   });
 }
+
+async findByPostulacion(postulacionId: number): Promise<Evaluacion[]> {
+  return this.evaluacionRepository.find({
+    where: { postulacion_id: postulacionId },
+    order: { fecha: 'DESC' }
+  });
+}
 }

@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Param, Patch, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, ParseIntPipe, UseGuards, Query } from '@nestjs/common';
 import { BaremoConvocatoriaService } from './baremo-convocatoria.service';
 import { CreateBaremoConvocatoriaDto } from './dto/create-baremo-convocatoria.dto';
 import { UpdateBaremoConvocatoriaDto } from './dto/update-baremo-convocatoria.dto';
@@ -21,7 +21,13 @@ export class BaremoConvocatoriaController {
   @Get()
   @UseGuards(JwtRolesGuard)
   @Roles('admin','evaluador')
-  findAll() {
+  findAll(@Query('convocatoria_id') convocatoriaId?: string) {
+    if (convocatoriaId) {
+      const id = parseInt(convocatoriaId, 10);
+      if (!isNaN(id)) {
+        return this.baremoConvocatoriaService.findByConvocatoria(id);
+      }
+    }
     return this.baremoConvocatoriaService.findAll();
   }
 

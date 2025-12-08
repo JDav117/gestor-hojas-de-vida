@@ -16,6 +16,8 @@ type User = {
 };
 type Convocatoria = { id: number; nombre: string; descripcion?: string | null; fecha_apertura: string | Date; fecha_cierre: string | Date; estado: string; programa_academico_id?: number | null; cupos?: number | null; sede?: string | null; dedicacion?: string | null; tipo_vinculacion?: string | null; requisitos_documentales?: string[] | null; min_puntaje_aprobacion_documental?: number | null; min_puntaje_aprobacion_tecnica?: number | null };
 type Programa = { id: number; nombre_programa: string; facultad?: string | null; nivel?: string | null; modalidad?: string | null; codigo_snies?: string | null; descripcion?: string | null };
+type ItemEvaluacion = { id: number; nombre_item: string; descripcion?: string | null };
+type BaremoConvocatoria = { id: number; convocatoria_id: number; item_evaluacion_id: number; puntaje_maximo: number; nombre_item?: string; descripcion?: string };
 
 export default function AdminPage() {
   const { user: currentUser } = useAuth();
@@ -36,9 +38,18 @@ export default function AdminPage() {
   const [editingProgramaId, setEditingProgramaId] = useState<number | null>(null);
   const [editingPrograma, setEditingPrograma] = useState<Required<Pick<Programa, 'nombre_programa'>> & Partial<Programa>>({ nombre_programa: '', facultad: '', nivel: '', modalidad: '', codigo_snies: '', descripcion: '' });
   // Menú de acciones por fila
-  type MenuKind = 'conv' | 'prog' | 'user';
+  // Baremo y items de evaluación
+  const [itemsEvaluacion, setItemsEvaluacion] = useState<ItemEvaluacion[]>([]);
+  const [newItem, setNewItem] = useState<{ nombre_item: string; descripcion: string }>({ nombre_item: '', descripcion: '' });
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<{ nombre_item: string; descripcion: string }>({ nombre_item: '', descripcion: '' });
+  const [baremoConvocatorias, setBaremoConvocatorias] = useState<BaremoConvocatoria[]>([]);
+  const [selectedConvBaremo, setSelectedConvBaremo] = useState<number | ''>('');
+  const [newBaremo, setNewBaremo] = useState<{ item_evaluacion_id: string; puntaje_maximo: string }>({ item_evaluacion_id: '', puntaje_maximo: '' });
+  
+  type MenuKind = 'conv' | 'prog' | 'user' | 'item' | 'baremo';
   const [openMenu, setOpenMenu] = useState<{ type: MenuKind; id: number } | null>(null);
-  type Section = 'convocatorias' | 'programas' | 'usuarios' | 'postulaciones';
+  type Section = 'convocatorias' | 'programas' | 'usuarios' | 'postulaciones' | 'baremo';
   const [activeSection, setActiveSection] = useState<Section | null>(null);
   const isMenuOpen = (type: MenuKind, id: number) => openMenu && openMenu.type === type && openMenu.id === id;
   const toggleMenu = (type: MenuKind, id: number) => {
@@ -118,10 +129,128 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get<Programa[]>('/programas-academicos');
+      const { data} = await api.get<Programa[]>('/programas-academicos');
       setProgramas(data || []);
     } catch (e: any) {
       setError(e?.response?.data?.message || e.message || 'Error cargando programas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar items de evaluación y baremo
+  const loadBaremoData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [itemsRes, baremoRes] = await Promise.all([
+        api.get<ItemEvaluacion[]>('/items-evaluacion'),
+        api.get<BaremoConvocatoria[]>('/baremo-convocatoria'),
+      ]);
+      setItemsEvaluacion(itemsRes.data || []);
+      setBaremoConvocatorias(baremoRes.data || []);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Error cargando baremo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // CRUD Items de Evaluación
+  const createItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.nombre_item.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/items-evaluacion', {
+        nombre_item: newItem.nombre_item.trim(),
+        descripcion: newItem.descripcion.trim() || undefined,
+      });
+      setNewItem({ nombre_item: '', descripcion: '' });
+      await loadBaremoData();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Error creando item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEditItem = (item: ItemEvaluacion) => {
+    setEditingItemId(item.id);
+    setEditingItem({
+      nombre_item: item.nombre_item,
+      descripcion: item.descripcion ?? '',
+    });
+  };
+
+  const cancelEditItem = () => {
+    setEditingItemId(null);
+    setEditingItem({ nombre_item: '', descripcion: '' });
+  };
+
+  const saveEditItem = async () => {
+    if (!editingItemId || !editingItem.nombre_item.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.patch(`/items-evaluacion/${editingItemId}`, {
+        nombre_item: editingItem.nombre_item.trim(),
+        descripcion: editingItem.descripcion.trim() || undefined,
+      });
+      cancelEditItem();
+      await loadBaremoData();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Error actualizando item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteItem = async (id: number) => {
+    if (!confirm('¿Eliminar este item de evaluación? Esta acción no se puede deshacer.')) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete(`/items-evaluacion/${id}`);
+      await loadBaremoData();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Error eliminando item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // CRUD Baremo Convocatoria
+  const createBaremo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedConvBaremo || !newBaremo.item_evaluacion_id || !newBaremo.puntaje_maximo) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/baremo-convocatoria', {
+        convocatoria_id: Number(selectedConvBaremo),
+        item_evaluacion_id: Number(newBaremo.item_evaluacion_id),
+        puntaje_maximo: Number(newBaremo.puntaje_maximo),
+      });
+      setNewBaremo({ item_evaluacion_id: '', puntaje_maximo: '' });
+      await loadBaremoData();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Error asignando item al baremo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteBaremo = async (id: number) => {
+    if (!confirm('¿Eliminar esta asignación de baremo?')) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete(`/baremo-convocatoria/${id}`);
+      await loadBaremoData();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message || 'Error eliminando baremo');
     } finally {
       setLoading(false);
     }
@@ -173,7 +302,11 @@ export default function AdminPage() {
   const exportCsv = () => {
     if (!postulaciones.length) return;
     const headers = ['id','postulante_id','convocatoria_id','programa_id','estado','fecha_postulacion'];
-    const rows = postulaciones.map(p => [p.id, p.postulante_id, p.convocatoria_id, (p.programa_id ?? ''), p.estado, new Date(p.fecha_postulacion).toISOString()]);
+    const rows = postulaciones.map(p => {
+      const fecha = p.fecha_postulacion ? new Date(p.fecha_postulacion) : new Date();
+      const fechaStr = !isNaN(fecha.getTime()) ? fecha.toISOString() : '';
+      return [p.id, p.postulante_id, p.convocatoria_id, (p.programa_id ?? ''), p.estado, fechaStr];
+    });
     const csv = [headers.join(','), ...rows.map(r => r.map(v => String(v).includes(',') ? `"${String(v).replace(/"/g,'""')}"` : String(v)).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -479,6 +612,17 @@ export default function AdminPage() {
                   <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               )
+            }, {
+              id: 'sec-baremo',
+              title: 'Baremo',
+              subtitle: 'Items de evaluación',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M9 12h6M9 16h6" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              )
             }].map(card => (
               <button
                 key={card.id}
@@ -490,6 +634,7 @@ export default function AdminPage() {
                     'sec-programas': 'programas',
                     'sec-usuarios': 'usuarios',
                     'postulaciones-section': 'postulaciones',
+                    'sec-baremo': 'baremo',
                   };
                   const sec = map[card.id];
                   setActiveSection(prev => (prev === sec ? null : sec));
@@ -497,6 +642,7 @@ export default function AdminPage() {
                   if (sec === 'programas') await loadProgramasOnly();
                   if (sec === 'usuarios') await loadUsersAndRoles();
                   if (sec === 'postulaciones') await loadPostulaciones();
+                  if (sec === 'baremo') await loadBaremoData();
                   setTimeout(() => scrollToId(card.id), 0);
                 }}
                 style={{
@@ -1083,6 +1229,260 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+        </div>
+      </details>
+      )}
+
+      {/* Baremo y Items de Evaluación */}
+      {activeSection === 'baremo' && (
+      <details className="accordion" open id="sec-baremo">
+        <summary>
+          <span>Baremo e Items de Evaluación</span>
+          <span className="text-muted">Gestionar criterios de evaluación</span>
+        </summary>
+        <div className="accordion-content">
+          
+          {/* SECCIÓN 1: Items de Evaluación */}
+          <div className="section-card" style={{ marginBottom: 16 }}>
+            <h4 style={{ marginBottom: 12 }}>Items de Evaluación</h4>
+            <p className="text-muted" style={{ marginBottom: 12, fontSize: '0.875rem' }}>
+              Los items de evaluación son los criterios que se utilizarán para calificar a los postulantes.
+            </p>
+            
+            <form onSubmit={createItem} className="form-row" style={{ gridTemplateColumns: '2fr 3fr auto', marginBottom: 12 }}>
+              <label>
+                <span>Nombre del Item *</span>
+                <input 
+                  className="input" 
+                  value={newItem.nombre_item} 
+                  onChange={(e) => setNewItem(p => ({ ...p, nombre_item: e.target.value }))} 
+                  placeholder="Ej: Formación académica"
+                  required 
+                />
+              </label>
+              <label>
+                <span>Descripción</span>
+                <input 
+                  className="input" 
+                  value={newItem.descripcion} 
+                  onChange={(e) => setNewItem(p => ({ ...p, descripcion: e.target.value }))} 
+                  placeholder="Detalle del criterio (opcional)"
+                />
+              </label>
+              <button className="btn btn-primary" type="submit" disabled={loading}>Crear Item</button>
+            </form>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre del Item</th>
+                    <th>Descripción</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemsEvaluacion.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.id}</td>
+                      <td>
+                        {editingItemId === item.id ? (
+                          <input 
+                            className="input" 
+                            value={editingItem.nombre_item} 
+                            onChange={(e) => setEditingItem(s => ({ ...s, nombre_item: e.target.value }))} 
+                          />
+                        ) : (
+                          item.nombre_item
+                        )}
+                      </td>
+                      <td>
+                        {editingItemId === item.id ? (
+                          <input 
+                            className="input" 
+                            value={editingItem.descripcion ?? ''} 
+                            onChange={(e) => setEditingItem(s => ({ ...s, descripcion: e.target.value }))} 
+                          />
+                        ) : (
+                          item.descripcion ?? '—'
+                        )}
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {editingItemId === item.id ? (
+                          <>
+                            <button className="btn btn-sm btn-primary" onClick={saveEditItem} disabled={loading} style={{ marginRight: 6 }}>Guardar</button>
+                            <button className="btn btn-sm btn-outline" onClick={cancelEditItem} disabled={loading}>Cancelar</button>
+                          </>
+                        ) : (
+                          <div className="actions" onMouseLeave={() => setOpenMenu(null)}>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline menu-btn"
+                              aria-haspopup="menu"
+                              aria-expanded={!!isMenuOpen('item', item.id)}
+                              onClick={() => toggleMenu('item', item.id)}
+                            >
+                              Acciones ▾
+                            </button>
+                            <div className={`menu ${isMenuOpen('item', item.id) ? '' : 'hidden'}`} role="menu">
+                              <button className="menu-item" role="menuitem" onClick={() => { startEditItem(item); setOpenMenu(null); }}>Editar</button>
+                              <button className="menu-item" role="menuitem" onClick={() => { deleteItem(item.id); setOpenMenu(null); }}>Eliminar</button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {itemsEvaluacion.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="empty-hint">Aún no hay items de evaluación</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* SECCIÓN 2: Asignar Items a Convocatorias (Baremo) */}
+          <div className="section-card">
+            <h4 style={{ marginBottom: 12 }}>Baremo por Convocatoria</h4>
+            <p className="text-muted" style={{ marginBottom: 12, fontSize: '0.875rem' }}>
+              Asigna items de evaluación a convocatorias específicas con su puntaje máximo.
+            </p>
+
+            <form onSubmit={createBaremo} className="form-row" style={{ gridTemplateColumns: '2fr 2fr 1fr auto', marginBottom: 12 }}>
+              <label>
+                <span>Convocatoria *</span>
+                <select 
+                  className="input" 
+                  value={selectedConvBaremo} 
+                  onChange={(e) => setSelectedConvBaremo(e.target.value ? Number(e.target.value) : '')}
+                  required
+                >
+                  <option value="">Seleccionar convocatoria</option>
+                  {convocatorias.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre} (#{c.id})</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Item de Evaluación *</span>
+                <select 
+                  className="input" 
+                  value={newBaremo.item_evaluacion_id} 
+                  onChange={(e) => setNewBaremo(p => ({ ...p, item_evaluacion_id: e.target.value }))}
+                  required
+                >
+                  <option value="">Seleccionar item</option>
+                  {itemsEvaluacion.map(item => (
+                    <option key={item.id} value={item.id}>{item.nombre_item}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Puntaje Máximo *</span>
+                <input 
+                  className="input" 
+                  type="number" 
+                  step="0.1" 
+                  min="0" 
+                  value={newBaremo.puntaje_maximo} 
+                  onChange={(e) => setNewBaremo(p => ({ ...p, puntaje_maximo: e.target.value }))} 
+                  placeholder="100"
+                  required
+                />
+              </label>
+              <button className="btn btn-primary" type="submit" disabled={loading || !selectedConvBaremo}>Asignar</button>
+            </form>
+
+            {selectedConvBaremo && (
+              <div style={{ marginBottom: 12, padding: '0.75rem', background: '#f0f9ff', borderRadius: 6, border: '1px solid #bae6fd' }}>
+                <div style={{ fontWeight: 600, marginBottom: 6, fontSize: '0.875rem' }}>
+                  Baremo de: {convocatorias.find(c => c.id === selectedConvBaremo)?.nombre}
+                </div>
+                <div style={{ display: 'grid', gap: 4, fontSize: '0.875rem' }}>
+                  {baremoConvocatorias
+                    .filter(b => b.convocatoria_id === selectedConvBaremo)
+                    .map(b => {
+                      const item = itemsEvaluacion.find(i => i.id === b.item_evaluacion_id);
+                      return (
+                        <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', background: '#fff', borderRadius: 4 }}>
+                          <span>{item?.nombre_item ?? `Item #${b.item_evaluacion_id}`}</span>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <span className="badge">{b.puntaje_maximo} pts</span>
+                            <button 
+                              className="btn btn-sm btn-outline" 
+                              onClick={() => deleteBaremo(b.id)}
+                              disabled={loading}
+                              style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {baremoConvocatorias.filter(b => b.convocatoria_id === selectedConvBaremo).length === 0 && (
+                    <div className="text-muted" style={{ textAlign: 'center', padding: '1rem' }}>
+                      No hay items asignados a esta convocatoria
+                    </div>
+                  )}
+                </div>
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e0f2fe', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Total del Baremo:</span>
+                  <span>
+                    {baremoConvocatorias
+                      .filter(b => b.convocatoria_id === selectedConvBaremo)
+                      .reduce((sum, b) => sum + b.puntaje_maximo, 0)
+                    } puntos
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Convocatoria</th>
+                    <th>Item de Evaluación</th>
+                    <th>Puntaje Máximo</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {baremoConvocatorias.map((b) => {
+                    const conv = convocatorias.find(c => c.id === b.convocatoria_id);
+                    const item = itemsEvaluacion.find(i => i.id === b.item_evaluacion_id);
+                    return (
+                      <tr key={b.id}>
+                        <td>{b.id}</td>
+                        <td>{conv?.nombre ?? `#${b.convocatoria_id}`}</td>
+                        <td>{item?.nombre_item ?? `Item #${b.item_evaluacion_id}`}</td>
+                        <td><span className="badge">{b.puntaje_maximo}</span></td>
+                        <td>
+                          <button 
+                            className="btn btn-sm btn-outline" 
+                            onClick={() => deleteBaremo(b.id)} 
+                            disabled={loading}
+                          >
+                            Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {baremoConvocatorias.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="empty-hint">Aún no hay items asignados a convocatorias</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </details>
       )}

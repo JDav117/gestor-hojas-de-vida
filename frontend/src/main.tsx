@@ -12,6 +12,7 @@ import ForbiddenPage from './pages/ForbiddenPage';
 import MisPostulaciones from './pages/MisPostulaciones';
 import PostulacionEditor from './pages/PostulacionEditor';
 import MisEvaluaciones from './pages/MisEvaluaciones';
+import EvaluarPostulacion from './pages/EvaluarPostulacion';
 import ConvocatoriasPage from './pages/ConvocatoriasPage';
 import './styles/theme.css';
 import { ToastProvider } from './context/ToastContext';
@@ -69,6 +70,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               element={
                 <ProtectedRoute roles={["admin", "evaluador"]}>
                   <MisEvaluaciones />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/evaluar/:id"
+              element={
+                <ProtectedRoute roles={["admin", "evaluador"]}>
+                  <EvaluarPostulacion />
                 </ProtectedRoute>
               }
             />

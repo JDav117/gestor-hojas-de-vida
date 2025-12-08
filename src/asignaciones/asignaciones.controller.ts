@@ -3,10 +3,14 @@ import { AsignacionesService } from './asignaciones.service';
 import { CreateAsignacionDto } from './dto/create-asignacion.dto';
 import { JwtRolesGuard } from '../common/jwt-roles.guard';
 import { Roles } from '../common/roles.decorator';
+import { PostulacionesService } from '../postulaciones/postulaciones.service';
 
 @Controller('asignaciones')
 export class AsignacionesController {
-  constructor(private readonly asignacionesService: AsignacionesService) {}
+  constructor(
+    private readonly asignacionesService: AsignacionesService,
+    private readonly postulacionesService: PostulacionesService
+  ) {}
 
   @Post()
   @UseGuards(JwtRolesGuard)
@@ -34,6 +38,16 @@ export class AsignacionesController {
   @Roles('admin','evaluador')
   async myAssignments(@Req() req: any) {
     const ids = await this.asignacionesService.getPostulacionIdsForEvaluador(Number(req.user?.userId));
-    return ids;
+    
+    // Obtener datos completos de cada postulación
+    const postulaciones = [];
+    for (const id of ids) {
+      const post = await this.postulacionesService.findOne(id);
+      if (post) {
+        postulaciones.push(post);
+      }
+    }
+    
+    return postulaciones;
   }
 }

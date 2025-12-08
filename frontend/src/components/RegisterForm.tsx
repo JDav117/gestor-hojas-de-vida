@@ -123,7 +123,7 @@ export default function RegisterForm({ onSuccess, title = 'Formulario de registr
         <span className="input-icon" aria-hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="1.5"/></svg>
         </span>
-        <input className="input" name="password" type="password" placeholder="Contraseña" value={form.password} onChange={onChange} required minLength={8} />
+        <input className="input" name="password" type="password" placeholder="Contraseña" autoComplete="new-password" value={form.password} onChange={onChange} required minLength={8} />
       </div>
       {form.password && (
         <div style={{ fontSize: '0.85rem', marginTop: '-0.5rem', color: passwordStrength.includes('✓') ? '#10b981' : '#6b7280' }}>
@@ -134,7 +134,7 @@ export default function RegisterForm({ onSuccess, title = 'Formulario de registr
         <span className="input-icon" aria-hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="1.5"/></svg>
         </span>
-        <input className="input" name="confirmPassword" type="password" placeholder="Confirmar contraseña" value={form.confirmPassword} onChange={onChange} required minLength={8} />
+        <input className="input" name="confirmPassword" type="password" placeholder="Confirmar contraseña" autoComplete="new-password" value={form.confirmPassword} onChange={onChange} required minLength={8} />
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.5rem 0' }}>
         <input 

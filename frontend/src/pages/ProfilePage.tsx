@@ -294,19 +294,19 @@ export default function ProfilePage() {
                 <span className="input-icon" aria-hidden>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="1.5"/></svg>
                 </span>
-                <input className="input" placeholder="Contraseña actual" type="password" value={pwd.currentPassword} onChange={(e)=> setPwd({...pwd, currentPassword: e.target.value})} required />
+                <input className="input" placeholder="Contraseña actual" type="password" autoComplete="current-password" value={pwd.currentPassword} onChange={(e)=> setPwd({...pwd, currentPassword: e.target.value})} required />
               </div>
               <div className="input-group">
                 <span className="input-icon" aria-hidden>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="1.5"/></svg>
                 </span>
-                <input className="input" placeholder="Nueva contraseña" type="password" value={pwd.newPassword} onChange={(e)=> setPwd({...pwd, newPassword: e.target.value})} required />
+                <input className="input" placeholder="Nueva contraseña" type="password" autoComplete="new-password" value={pwd.newPassword} onChange={(e)=> setPwd({...pwd, newPassword: e.target.value})} required />
               </div>
               <div className="input-group">
                 <span className="input-icon" aria-hidden>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="1.5"/></svg>
                 </span>
-                <input className="input" placeholder="Confirmar nueva contraseña" type="password" value={pwd.confirm} onChange={(e)=> setPwd({...pwd, confirm: e.target.value})} required />
+                <input className="input" placeholder="Confirmar nueva contraseña" type="password" autoComplete="new-password" value={pwd.confirm} onChange={(e)=> setPwd({...pwd, confirm: e.target.value})} required />
               </div>
               {error && <div className="text-danger">{error}</div>}
               {ok && <div className="text-success">{ok}</div>}
