@@ -3,6 +3,21 @@
 # Gestor de Hojas de Vida (GHV_UIP)
 
 Backend modular desarrollado en NestJS para la gestión de hojas de vida, postulaciones y procesos de selección académica en el ámbito universitario. Permite la administración de usuarios, roles, documentos y procesos de selección.
+
+## 📚 Documentación del Proyecto
+
+### Resúmenes y Análisis
+- **[RESUMEN_RAPIDO_PRS.md](RESUMEN_RAPIDO_PRS.md)** - Resumen ejecutivo de PRs e impacto (lectura rápida)
+- **[RESUMEN_PRS_E_IMPACTO.md](RESUMEN_PRS_E_IMPACTO.md)** - Análisis completo de PRs y su impacto (detallado)
+- **[RESUMEN_EJECUTIVO.md](RESUMEN_EJECUTIVO.md)** - Auditoría del proyecto y estado actual
+- **[RESUMEN.md](RESUMEN.md)** - Plan de mejoras implementadas
+
+### Guías Técnicas
+- **[PENDIENTES_Y_MEJORAS.md](PENDIENTES_Y_MEJORAS.md)** - Roadmap y pendientes del proyecto
+- **[CORRECCIONES_CRITICAS.md](CORRECCIONES_CRITICAS.md)** - Issues de seguridad y correcciones necesarias
+- **[IMPLEMENTACION_UPLOAD.md](IMPLEMENTACION_UPLOAD.md)** - Guía de implementación de upload de archivos
+- **[INCONGRUENCIAS.md](INCONGRUENCIAS.md)** - Análisis de inconsistencias del código
+
 ## Estructura del proyecto
 
 ```
