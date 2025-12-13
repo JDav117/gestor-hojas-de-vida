@@ -23,9 +23,9 @@ Este documento presenta un análisis exhaustivo del trabajo realizado en el repo
 
 ## 📝 HISTORIAL DE PULL REQUESTS Y CAMBIOS PRINCIPALES
 
-### PR #1: "Ajustes nuevos: Arquitectura modular terminada y solida, Baremo dinamico implementado"
+### PR #1: "Ajustes nuevos: Arquitectura modular terminada y sólida, Baremo dinámico implementado"
 **Fecha:** 8 de diciembre de 2025  
-**Autor:** JDav117 (ramortdavidj@gmail.com)  
+**Autor:** JDav117 (jdav117@gmail.com)  
 **Estado:** ✅ Merged  
 **Archivos Modificados:** 1,033+ archivos
 
@@ -786,7 +786,7 @@ El sistema está listo para:
 ## 👥 RECONOCIMIENTOS
 
 ### Desarrollador Principal
-**JDav117** (ramortdavidj@gmail.com)
+**JDav117** (jdav117@gmail.com)
 - Arquitectura backend completa
 - Implementación de todos los módulos
 - Sistema de baremo dinámico
