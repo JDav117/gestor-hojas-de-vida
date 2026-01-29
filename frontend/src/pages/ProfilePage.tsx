@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [fotoPreview, setFotoPreview] = useState<string | null>((user as any)?.foto_perfil ? `http://localhost:3000/${(user as any).foto_perfil}` : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [showFotoModal, setShowFotoModal] = useState(false);
   // Blocks for Drawer (defined once to reuse in prioritized rendering)
   const PostulacionesBlock = (
     <div className="fade-in-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -90,6 +91,15 @@ export default function ProfilePage() {
     return () => { cancelled = true; };
   }, [isAdmin, isEvaluador]);
 
+  // Cargar foto de perfil del usuario
+  useEffect(() => {
+    if ((user as any)?.foto_perfil) {
+      const fotoUrl = `http://localhost:3000/${(user as any).foto_perfil}`;
+      console.log('Cargando foto del usuario:', fotoUrl);
+      setFotoPreview(fotoUrl);
+    }
+  }, [user?.id]);
+
   const handleFotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -103,22 +113,35 @@ export default function ProfilePage() {
   };
 
   const handleFotoUpload = async () => {
-    if (!fileInputRef.current?.files?.[0]) return;
+    if (!fileInputRef.current?.files?.[0]) {
+      setError('No hay archivo seleccionado');
+      return;
+    }
     
     setUploadingFoto(true);
+    setError(null);
     try {
       const formData = new FormData();
       formData.append('foto', fileInputRef.current.files[0]);
+      
+      console.log('Uploading file:', fileInputRef.current.files[0].name);
       
       const res = await api.post('/users/me/foto', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
-      setFotoPreview(`http://localhost:3000/${res.data.foto_perfil}`);
-      setOk('Foto actualizada correctamente');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      console.log('Upload response:', res.data);
+      
+      if (res.data.foto_perfil) {
+        const fotoUrl = `http://localhost:3000/${res.data.foto_perfil}`;
+        console.log('Setting foto preview to:', fotoUrl);
+        setFotoPreview(fotoUrl);
+        setOk('Foto actualizada correctamente');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al subir la foto');
+      console.error('Error uploading foto:', err);
+      setError(err?.response?.data?.message || err.message || 'Error al subir la foto');
     } finally {
       setUploadingFoto(false);
     }
@@ -136,8 +159,16 @@ export default function ProfilePage() {
                 width: 60,
                 height: 60,
               }}
-              onClick={() => fileInputRef.current?.click()}
-              title="Click para cambiar foto"
+              onClick={() => {
+                if (fotoPreview && !fileInputRef.current?.files?.[0]) {
+                  // Si existe foto y no estamos en modo edición, mostrar modal
+                  setShowFotoModal(true);
+                } else {
+                  // Si no hay foto o estamos editando, abrir selector
+                  fileInputRef.current?.click();
+                }
+              }}
+              title={fotoPreview ? "Click para ver ampliada o cambiar" : "Click para agregar foto"}
             >
               {fotoPreview ? (
                 <img 
@@ -148,6 +179,7 @@ export default function ProfilePage() {
                     height: '100%',
                     borderRadius: '50%',
                     objectFit: 'cover',
+                    border: '2px solid #ccc',
                   }}
                 />
               ) : (
@@ -316,6 +348,64 @@ export default function ProfilePage() {
               </div>
             </form>
             )}
+          </div>
+        </div>
+      )}
+      {showFotoModal && fotoPreview && (
+        <div 
+          className="overlay" 
+          style={{ display: 'grid', placeItems: 'center', zIndex: 1200 }}
+          onClick={() => setShowFotoModal(false)}
+        >
+          <div 
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              backgroundColor: '#000',
+              borderRadius: '8px',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="btn-ghost"
+              onClick={() => setShowFotoModal(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                fontSize: '24px',
+                color: '#fff',
+                zIndex: 1201,
+              }}
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+            <img 
+              src={fotoPreview} 
+              alt="Foto de perfil ampliada"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                objectFit: 'contain',
+                borderRadius: '4px',
+              }}
+            />
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                setShowFotoModal(false);
+                fileInputRef.current?.click();
+              }}
+              style={{ marginTop: '15px' }}
+            >
+              Cambiar foto
+            </button>
           </div>
         </div>
       )}

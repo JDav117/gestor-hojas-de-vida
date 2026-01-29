@@ -1,0 +1,24 @@
+# Dockerfile para MySQL 8.0
+FROM mysql:8.0-debian
+
+# Variables de entorno para MySQL
+ENV MYSQL_ROOT_PASSWORD=root_password_secure_change_this
+ENV MYSQL_DATABASE=gestor_hojas_de_vida_production
+ENV MYSQL_USER=ghv_app_user
+ENV MYSQL_PASSWORD=app_secure_password_change_this
+
+# Copiar script de inicialización
+COPY ./docker-entrypoint-initdb.d/ /docker-entrypoint-initdb.d/
+
+# Configuración de MySQL para producción
+COPY ./docker-config/mysql.cnf /etc/mysql/conf.d/
+
+# Exponer puerto
+EXPOSE 3306
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} || exit 1
+
+# Comando de inicio (heredado de la imagen base)
+CMD ["mysqld"]

@@ -86,7 +86,20 @@ export class UsersController {
   async uploadProfilePhoto(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
     const userId = req.user?.userId;
     if (!userId) return { statusCode: 401, message: 'Unauthorized' };
-    const fotoPath = await this.usersService.updateProfilePhoto(Number(userId), file);
-    return { message: 'Foto actualizada', foto_perfil: fotoPath };
+    
+    if (!file) {
+      return { statusCode: 400, message: 'No file provided' };
+    }
+    
+    console.log('📸 Uploading photo for user:', userId, 'File:', file.originalname);
+    
+    try {
+      const fotoPath = await this.usersService.updateProfilePhoto(Number(userId), file);
+      console.log('✅ Photo uploaded successfully:', fotoPath);
+      return { message: 'Foto actualizada', foto_perfil: fotoPath };
+    } catch (error: any) {
+      console.error('❌ Error uploading photo:', error.message);
+      return { statusCode: 400, message: error.message };
+    }
   }
 }

@@ -1,0 +1,38 @@
+# Configuración de MySQL para Producción
+[mysqld]
+
+# Modo SQL strict - requiere características estándar
+sql_mode='STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'
+
+# Seguridad
+bind-address=0.0.0.0
+# El puerto por defecto
+port=3306
+
+# Conexiones
+max_connections=200
+max_allowed_packet=64M
+interactive_timeout=28800
+wait_timeout=28800
+
+# Logging y auditoría
+log_error=/var/log/mysql/error.log
+general_log=OFF
+slow_query_log=ON
+slow_query_log_file=/var/log/mysql/slow.log
+long_query_time=2
+
+# Replicación y backup
+skip_name_resolve=ON
+character_set_server=utf8mb4
+collation_server=utf8mb4_unicode_ci
+
+# Rendimiento
+innodb_buffer_pool_size=256M
+innodb_log_file_size=100M
+max_connections=500
+
+# SSL (opcional para conexiones seguras)
+# ssl_ca=/etc/mysql/certs/ca.pem
+# ssl_cert=/etc/mysql/certs/server-cert.pem
+# ssl_key=/etc/mysql/certs/server-key.pem

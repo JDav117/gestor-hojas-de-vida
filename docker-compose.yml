@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Servicio MySQL - Base de Datos
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    container_name: ghv_mysql_db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secure_password_change_this}
+      MYSQL_DATABASE: ${DB_DATABASE:-gestor_hojas_de_vida}
+      MYSQL_USER: ${DB_USERNAME:-ghv_app_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_secure_password_change_this}
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    volumes:
+      # Volumen para persistencia de datos
+      - db_data:/var/lib/mysql
+      # Scripts de inicialización
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+      # Configuración de MySQL
+      - ./docker-config/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+    networks:
+      - ghv_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Servicio de la Aplicación NestJS
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    container_name: ghv_nestjs_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USERNAME:-ghv_app_user}
+      DB_PASSWORD: ${DB_PASSWORD:-app_secure_password_change_this}
+      DB_DATABASE: ${DB_DATABASE:-gestor_hojas_de_vida}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
+      APP_PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      
+      - app_uploads:/app/uploads
+    networks:
+      - ghv_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Servicio PhpMyAdmin 
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    container_name: ghv_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USERNAME:-ghv_app_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-app_secure_password_change_this}
+      PMA_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secure_password_change_this}
+    depends_on:
+      - db
+    networks:
+      - ghv_network
+    profiles:
+      - dev  # Solo incluir en desarrollo: docker-compose --profile dev up
+
+volumes:
+  db_data:
+    driver: local
+  app_uploads:
+    driver: local
+
+networks:
+  ghv_network:
+    driver: bridge
